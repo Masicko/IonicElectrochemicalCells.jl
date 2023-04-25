@@ -48,3 +48,11 @@ function parameters2VoronoiData(model, name :: Symbol)
     end
     )
 end
+
+function integrate_arrays_by_trapezoid(x, y)
+	sum = 0
+	for i in 1:length(x)-1
+		sum += (x[i+1]-x[i])*(y[i]+y[i+1])/2
+	end
+	return sum
+end

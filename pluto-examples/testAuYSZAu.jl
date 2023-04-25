@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.16
+# v0.19.20
 
 using Markdown
 using InteractiveUtils
@@ -17,7 +17,8 @@ end
 # ╔═╡ 0880ba1e-1f25-465e-b2e5-cc34acc7cea1
 begin
     import Pkg
-    Pkg.activate(Base.current_project())
+    #Pkg.activate(Base.current_project())
+	Pkg.activate("..")
 	#
     # activate the shared project environment
     # instantiate, i.e. make sure that all packages are downloaded
@@ -33,7 +34,10 @@ end
 @revise using IonicElectrochemicalCells
 
 # ╔═╡ fd4f4ac3-f921-4ac9-a271-53a370950eec
-alphas = [.30, 0.5]
+begin
+	alphas = [.30, 0.5]
+	pwd()
+end
 
 # ╔═╡ 02041fc3-1078-458b-bfb2-8b5251948b0d
 md"""
@@ -203,11 +207,14 @@ end
 # ╔═╡ d389d5ec-923f-42c9-9903-f43d941b5a9b
 stateplot(BLG1icell, df.U[LG1ibiasindex])
 
+# ╔═╡ b5e3ac3a-627c-4ee5-84a6-6f5391044739
+stateplot(BLG1icell, df.U[LG1ibiasindex])
+
 # ╔═╡ d6d5bdfe-d730-445c-80bd-6c5a4d57cbb6
 function biascapacitance!(cell :: AbstractCell; bend=1.0, bstep=0.05, tend=1e-1)
 	function dcap_stepdown!(cell :: AbstractCell; dbias=1e-2, tend=tend)
     	bias = cell.system.physics.data.bias
-		measurement(cell) = AuL_charge(cell)
+		measurement(cell) = get_stored_charge(cell)
     	m1 = measurement(cell)
     	stationary_update!(cell, Dict(:bias => bias-dbias), tend=tend)
     	m2 = measurement(cell)
@@ -247,6 +254,9 @@ plot(Bdf.bias, Bdf.capacitance)
 # ╔═╡ 053e25e7-fdbd-40a5-8867-368f7782f99c
 modvalbias = Bdf.bias[modvalbiasindex]
 
+# ╔═╡ e01b4c78-bd31-44a8-aaf4-14b20c9084e0
+println(Bdf.capacitance)
+
 # ╔═╡ e2076e94-8101-46f0-9ce4-92cc6370402b
 begin
 	update_parameters!(BNcell, Dict(:alpha => alphas[1], :alphas => alphas[2]))
@@ -259,6 +269,7 @@ stateplot(BNcell, BNdf.U[LGbiasindex])
 
 # ╔═╡ 01e85773-a85a-4ae9-bdb9-93c762359230
 plot(BNdf.bias, BNdf.capacitance)
+#println(BNdf.capacitance)
 
 # ╔═╡ 2dce89ec-d39e-4a9c-8fb0-8fc7f4f722d5
 compareplot(BNdf.U[🐶], Bdf.U[🐶])
@@ -277,8 +288,10 @@ end;
 
 # ╔═╡ db3a45ba-970f-4a5b-922c-3b784aca061e
 begin
-	cp = plot(capdf.bias, capdf.capacitance)
-	plot!(cp, refcapdf.bias, refcapdf.capacitance, linestyle=:dot)
+	#cp = plot(capdf.bias, capdf.capacitance)
+	#plot!(cp, refcapdf.bias, refcapdf.capacitance, linestyle=:dot)
+	plot(refcapdf.bias, refcapdf.capacitance, linestyle=:dot)
+	println(refcapdf.capacitance)
 end
 
 # ╔═╡ e1a9a96b-aada-4f64-b1b9-37c042ea8806
@@ -315,6 +328,7 @@ To-Do
 # ╠═65ba751d-b21a-46ae-bb34-a8f329f64daa
 # ╠═053e25e7-fdbd-40a5-8867-368f7782f99c
 # ╟─58fafa95-7562-45cd-9a55-ec934615a5a9
+# ╠═e01b4c78-bd31-44a8-aaf4-14b20c9084e0
 # ╟─2fe99ebb-ef41-4d75-bde2-85867f7fccca
 # ╠═b5a1c520-a787-444e-a087-9015e20b22c7
 # ╠═e2076e94-8101-46f0-9ce4-92cc6370402b
@@ -336,10 +350,11 @@ To-Do
 # ╠═7cb18a48-4012-4e52-88ec-a0ef10f1ecd2
 # ╟─67b8e041-48f9-465b-a4e8-516ea4b377aa
 # ╠═d389d5ec-923f-42c9-9903-f43d941b5a9b
-# ╟─6aae8169-96cf-411c-ac28-a8e9164e415d
+# ╠═6aae8169-96cf-411c-ac28-a8e9164e415d
 # ╟─3d601f9a-e718-441f-a676-7652bdd048bd
 # ╠═db3a45ba-970f-4a5b-922c-3b784aca061e
 # ╠═0b2d3b1c-663b-4ecb-ac7e-81c26faeff80
+# ╠═b5e3ac3a-627c-4ee5-84a6-6f5391044739
 # ╠═e929ca9d-b7d8-4868-b4bf-bbe44de041b4
 # ╠═d6d5bdfe-d730-445c-80bd-6c5a4d57cbb6
 # ╟─e1a9a96b-aada-4f64-b1b9-37c042ea8806

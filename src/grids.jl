@@ -68,3 +68,20 @@ function simplefullcell1D(hElec, hElda; N=3)
 	ExtendableGrids.bfacemask!(grid, [x4], [x4], 4, tol=btol)
     grid
 end
+
+function half_cell1D(hEL, hElec, hER; dmin) 
+	x0 = 0.0
+	x1 = hEL
+	x2 = hEL + 0.5*hElec
+	eldaLeft = ExtendableGrids.geomspace(x0, x1, 1e-1*hEL, dmin)
+	elecLeft = ExtendableGrids.geomspace(x1, x2, dmin, 1e-1*hElec)
+	X1 = ExtendableGrids.glue(eldaLeft,elecLeft)
+	grid = ExtendableGrids.simplexgrid(X1)
+    btol = 1e-2*dmin
+	ExtendableGrids.cellmask!(grid, [x0], [x1], Ω_Aul, tol=btol)
+	ExtendableGrids.cellmask!(grid, [x1], [x2], Ω_YSZ, tol=btol)
+	ExtendableGrids.bfacemask!(grid, [x0], [x0], 1, tol=btol)
+	ExtendableGrids.bfacemask!(grid, [x1], [x1], 2, tol=btol)
+	ExtendableGrids.bfacemask!(grid, [x1], [x1], 3, tol=btol)
+    grid
+end
