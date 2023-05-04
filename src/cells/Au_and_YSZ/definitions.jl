@@ -1,7 +1,7 @@
 #=
 Domain annotation
 =#
-const Ω_Aul, Ω_YSZ, Ω_Aur = 1, 2, 3
+const Ω_Aul, Ω_YSZ, Ω_Aur = 66, 2, 3
 const bulk_domains = (Ω_Aul, Ω_YSZ, Ω_Aur)
 const Γ_Aul, Γ_YSZl, Γ_YSZr, Γ_Aur = 1, 3, 4, 2
 const interfaces = (Γ_Aul, Γ_YSZl, Γ_YSZr, Γ_Aur)
@@ -12,9 +12,7 @@ const iyVs = 3
 const surface_species = (iyVs)
 const species_names = ("ipsi", "iyV")
 # extended quantities
-const e_bulk_domains = (eΩ_Aul, eΩ_YSZl, eΩ_YSZr, eΩ_Aur) = 1, 2, 3, 4
-const e_interfaces = (eΓ_Aul, eΓ_YSZl, eΓ_YSZc, eΓ_YSZr, eΓ_Aur) = 1, 3, 4, 5, 2
-const e_ISR = (eΓ_YSZl, eΓ_YSZr)
+const e_Ω_YSZl, e_Ω_YSZr = 2, 4
 
 
 #=

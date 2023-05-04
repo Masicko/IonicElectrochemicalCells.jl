@@ -669,7 +669,7 @@ Asymetric variant for density of bulk quantities
     CommonCell...
 end
 
-
+#function AYA_Sl(grid=cell1D(electrode_thickness, electrolyte_thickness, electrode_thickness, dmin=1e-16))
 function AYA_Sl(grid=doublehalf_cell1D(electrode_thickness, electrolyte_thickness, electrode_thickness, dmin=1e-16))
     new = AYA_Sl(0.0, 0.0, 0.0, 0.0)
     new.parameters = Model((SharedParams(), YSZparams(), Auparams(), ISRparameters()))
@@ -679,25 +679,50 @@ function AYA_Sl(grid=doublehalf_cell1D(electrode_thickness, electrolyte_thicknes
     return new
 end
 
-function get_S(edge, data)
-    if edge.region in [eΩ_Aul, eΩ_YSZl]
-        return data.SL
-    elseif edge.region in [eΩ_Aur, eΩ_YSZr]
-        return data.SR
-    end
-end
+# function get_S(edge, data)
+#     if edge.region in [eΩ_Aul, eΩ_YSZl]
+#         return data.SL
+#     elseif edge.region in [eΩ_Aur, eΩ_YSZr]
+#         return data.SR
+#     end
+# end
 
-e_BoltzmannAu_ne(data, V, S) = nLAu(S) * exp(-ze * e0 / kB / data.T * V)
+# e_BoltzmannAu_ne(data, V, S) = nLAu(S) * exp(-ze * e0 / kB / data.T * V)
 
 AYA_Sl_physics = function (; AueDensity=BoltzmannAu_ne)
     ayaLGp = ayaLGphys(AueDensity=AueDensity)
     return VoronoiFVM.Physics(
         data=AYALG1iBoltzmannData(),
         # bulk properties inherited from ayaLGphysics
-        flux=ayaLGp.flux,
-        reaaction=ayaLGp.reaction,
-        storage=ayaLGp.storage,
+        #flux=ayaLGp.flux,
+        #reaaction=ayaLGp.reaction,
+        #storage=ayaLGp.storage,
         
+        flux=function (f, u, edge, data)
+            if edge.region in [Ω_Aul, Ω_Aur]
+                f[ipsi] = Fick_flux(u[ipsi, 1], u[ipsi, 2], epsAu)
+            elseif edge.region in [e_Ω_YSZl, e_Ω_YSZr] #[eΩ_YSZl, eΩ_YSZr]
+                YSZfluxes!(f,u,edge,data)
+            end
+        end,
+        #   
+        reaction=function (f, u, node, data)
+            if node.region == Ω_Aul
+                f[ipsi] = -Au_charge_density(AueDensity(data, u[ipsi]- data.bias))
+            elseif node.region in [e_Ω_YSZl, e_Ω_YSZr] #[eΩ_YSZl, eΩ_YSZr]
+                f[ipsi] = -YSZ_charge_density(nVmax(data.alpha) * u[iyV])   
+            elseif node.region == Ω_Aur
+                f[ipsi] = -Au_charge_density(AueDensity(data, u[ipsi] - 0))
+            end
+        end,
+        #
+        storage=function (f, u, node, data)
+            f[ipsi] = 0.0
+            if node.region in [e_Ω_YSZl, e_Ω_YSZr] #[eΩ_YSZl, eΩ_YSZr]
+                f[iyV] = u[iyV]
+            end
+        end,
+
         # flux=function (f, u, edge, data)
         #     if edge.region in (eΩ_Aul, eΩ_Aur)
         #         f[ipsi] = Fick_flux(u[ipsi, 1], u[ipsi, 2], epsAu)
@@ -724,11 +749,9 @@ AYA_Sl_physics = function (; AueDensity=BoltzmannAu_ne)
         #     end
         # end,
         breaction=function (f, u, bnode, data)
-            if bnode.region == eΓ_YSZc
-                # it seems nothing should be added here
-            end
-            if bnode.region in e_ISR
-                # !! notation: ν is an outer normal vector
+            #if bnode.region in e_ISR
+            if bnode.region in ISR
+                    # !! notation: ν is an outer normal vector
                 # Adsorption of vacancies 
                 # TODO add the difference of the electrostatic potential or its derivative*thickness of the ISR to the "equilibrium constant for vacancies"
                 KVsq = exp(-data.GA / data.T / kB / 2 + (data.AYSZ * u[iyV] - data.AYSZs * u[iyVs]) / 2) # sqrt(KV)
@@ -745,7 +768,8 @@ AYA_Sl_physics = function (; AueDensity=BoltzmannAu_ne)
                 f[iyVs] = -data.kA * ReducedRateA / nVmaxs(data.alphas, AreaRatio)
                 # implementation for species
                 # - j ̇ν + breaction = 0
-                f[iyV] = data.kA * ReducedRateA / e_nVmax(data.alpha, AreaRatio)
+                f[iyV] = data.kA * ReducedRateA / nVmax(data.alpha)
+            #f[iyV] = data.kA * ReducedRateA / e_nVmax(data.alpha, AreaRatio)
                 # equilibrium of electrons
                 # V = (bnode.region == Γ_YSZl ? data.bias : 0.0) - u[ipsi]
                 # V = reduced_voltage(u, bnode, data)
@@ -766,8 +790,9 @@ AYA_Sl_physics = function (; AueDensity=BoltzmannAu_ne)
         end,
         #
         bstorage=function (f, u, bnode, data)
-            if bnode.region in e_ISR #[Γ_YSZl,Γ_YSZr]
-                f[iyVs] = u[iyVs]
+            #if bnode.region in e_ISR #[Γ_YSZl,Γ_YSZr]
+            if bnode.region in ISR #[Γ_YSZl,Γ_YSZr]
+                    f[iyVs] = u[iyVs]
             end
         end
     )
@@ -777,8 +802,11 @@ end
 function AYA_Sl_system(grid; AueDensity=BoltzmannAu_ne)
     system = VoronoiFVM.System(grid, AYA_Sl_physics(AueDensity=AueDensity), unknown_storage=:sparse)
     #
-    enable_species!(system, ipsi, collect(e_bulk_domains))
-    enable_species!(system, iyV, [eΩ_YSZr, eΩ_YSZr])
+    #enable_species!(system, ipsi, collect([eΩ_Aul, 5, eΩ_Aur]))
+    #enable_species!(system, iyV, [5])
+    #enable_boundary_species!(system, iyVs, [eΓ_YSZl, eΓ_YSZr])
+    enable_species!(system, ipsi, [Ω_Aul, e_Ω_YSZl, e_Ω_YSZr, Ω_Aur])
+    enable_species!(system, iyV, [e_Ω_YSZl, e_Ω_YSZr])
     enable_boundary_species!(system, iyVs, [Γ_YSZl, Γ_YSZr])
     #
     boundary_dirichlet!(system, ipsi, 1, 0.0)
