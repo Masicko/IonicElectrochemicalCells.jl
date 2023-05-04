@@ -85,3 +85,30 @@ function half_cell1D(hEL, hElec, hER; dmin)
 	ExtendableGrids.bfacemask!(grid, [x1], [x1], 3, tol=btol)
     grid
 end
+
+function doublehalf_cell1D(hEL, hElec, hER; dmin) 
+	x0 = 0.0
+	x1 = hEL
+	x2 = hEL + 0.5*hElec
+	x3 = hEL + hElec
+	x4 = hEL + hElec + hER
+	eldaLeft = ExtendableGrids.geomspace(x0, x1, 1e-1*hEL, dmin)
+	elecLeft = ExtendableGrids.geomspace(x1, x2, dmin, 1e-1*hElec)
+	elecRight= ExtendableGrids.geomspace(x2, x3, 1e-1*hElec, dmin)
+	eldaRight= ExtendableGrids.geomspace(x3, x4, dmin, 1e-1*hER)
+	X1 = ExtendableGrids.glue(eldaLeft, elecLeft)
+	X2 = ExtendableGrids.glue(X1,elecRight)
+	X3 = ExtendableGrids.glue(X2,eldaRight)
+	grid = ExtendableGrids.simplexgrid(X3)
+    btol = 1e-2*dmin
+	ExtendableGrids.cellmask!(grid, [x0], [x1], eΩ_Aul, tol=btol)
+	ExtendableGrids.cellmask!(grid, [x1], [x2], eΩ_YSZl, tol=btol)
+	ExtendableGrids.cellmask!(grid, [x2], [x3], eΩ_YSZr, tol=btol)
+	ExtendableGrids.cellmask!(grid, [x3], [x4], eΩ_Aur, tol=btol)
+	ExtendableGrids.bfacemask!(grid, [x0], [x0], eΓ_Aul, tol=btol)
+	ExtendableGrids.bfacemask!(grid, [x1], [x1], eΓ_YSZl, tol=btol)
+	ExtendableGrids.bfacemask!(grid, [x2], [x2], eΓ_YSZc, tol=btol)
+	ExtendableGrids.bfacemask!(grid, [x3], [x3], eΓ_YSZr, tol=btol)
+	ExtendableGrids.bfacemask!(grid, [x4], [x4], eΓ_Aur, tol=btol)
+    grid
+end

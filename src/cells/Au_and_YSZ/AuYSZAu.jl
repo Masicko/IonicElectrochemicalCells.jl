@@ -632,6 +632,236 @@ inival(cell::AYALG1iBoltzmann_HALF) = ayaLG1i_inival(cell.system)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#=
+
+Asymetric variant for density of bulk quantities
+
+=#
+@composite mutable struct AYA_Sl <: AbstractCell
+    CommonCell...
+end
+
+
+function AYA_Sl(grid=doublehalf_cell1D(electrode_thickness, electrolyte_thickness, electrode_thickness, dmin=1e-16))
+    new = AYA_Sl(0.0, 0.0, 0.0, 0.0)
+    new.parameters = Model((SharedParams(), YSZparams(), Auparams(), ISRparameters()))
+    new.system = AYA_Sl_system(grid, AueDensity=BoltzmannAu_ne)
+    new.U = inival(new)
+    new.Uold = copy(new.U)
+    return new
+end
+
+function get_S(edge, data)
+    if edge.region in [eΩ_Aul, eΩ_YSZl]
+        return data.SL
+    elseif edge.region in [eΩ_Aur, eΩ_YSZr]
+        return data.SR
+    end
+end
+
+e_BoltzmannAu_ne(data, V, S) = nLAu(S) * exp(-ze * e0 / kB / data.T * V)
+
+AYA_Sl_physics = function (; AueDensity=BoltzmannAu_ne)
+    ayaLGp = ayaLGphys(AueDensity=AueDensity)
+    return VoronoiFVM.Physics(
+        data=AYALG1iBoltzmannData(),
+        # bulk properties inherited from ayaLGphysics
+        flux=ayaLGp.flux,
+        reaaction=ayaLGp.reaction,
+        storage=ayaLGp.storage,
+        
+        # flux=function (f, u, edge, data)
+        #     if edge.region in (eΩ_Aul, eΩ_Aur)
+        #         f[ipsi] = Fick_flux(u[ipsi, 1], u[ipsi, 2], epsAu)
+        #     elseif edge.region in (eΩ_YSZl, eΩ_YSZr)
+        #         f[iyV] = LGS_flux(u[iyV, 1], u[iyV, 2], u[ipsi, 1], u[ipsi, 2], data.DYSZ*get_S(edge, data), e0 * zV / kB / data.T, data.AYSZ * e0 / kB / data.T) # interaction energy A enters here
+        #         f[ipsi] = Fick_flux(u[ipsi, 1], u[ipsi, 2], epsYSZ)
+        #     end
+        # end,
+        # reaction=function (f, u, node, data)
+        #     if node.region == eΩ_Aul
+        #         f[ipsi] = -e_Au_charge_density(AueDensity(data, u[ipsi]- data.bias, data.SL), data.SL)
+        #     elseif node.region == eΩ_YSZl
+        #         f[ipsi] = -e_YSZ_charge_density(e_nVmax(data.alpha, data.SL) * u[iyV], data.SL)
+        #     elseif node.region == eΩ_YSZr
+        #         f[ipsi] = -e_YSZ_charge_density(e_nVmax(data.alpha, data.SR) * u[iyV], data.SR)   
+        #     elseif node.region == eΩ_Aur
+        #         f[ipsi] = -e_Au_charge_density(AueDensity(data, u[ipsi] - 0, data.SR), data.SR)
+        #     end
+        # end,
+        # storage=function (f, u, node, data)
+        #     f[ipsi] = 0.0
+        #     if node.region in (eΩ_YSZl, eΩ_YSZr)
+        #         f[iyV] = u[iyV]*get_S(node, data)
+        #     end
+        # end,
+        breaction=function (f, u, bnode, data)
+            if bnode.region == eΓ_YSZc
+                # it seems nothing should be added here
+            end
+            if bnode.region in e_ISR
+                # !! notation: ν is an outer normal vector
+                # Adsorption of vacancies 
+                # TODO add the difference of the electrostatic potential or its derivative*thickness of the ISR to the "equilibrium constant for vacancies"
+                KVsq = exp(-data.GA / data.T / kB / 2 + (data.AYSZ * u[iyV] - data.AYSZs * u[iyVs]) / 2) # sqrt(KV)
+                ReducedRateA = KVsq * u[iyV] * (1.0 - u[iyVs]) - 1 / KVsq * u[iyVs] * (1.0 - u[iyV])
+                # INFO the reaction rate is calculated in [# vacancies/cross section area]
+                # and its contribution to both coverages isn't thus far scaled appropriately
+                # However, this is no problem for a blocking electrode in equilibrium...
+                # the fix should look something like
+                # ... a check is needed though
+                # AreaRatio = (bnode.region == Γ_YSZl ? data.SL : data.SR)
+                AreaRatio = ISR_arearatio(bnode, data)
+                # implementation for bspecies
+                # bstorage + breaction = 0
+                f[iyVs] = -data.kA * ReducedRateA / nVmaxs(data.alphas, AreaRatio)
+                # implementation for species
+                # - j ̇ν + breaction = 0
+                f[iyV] = data.kA * ReducedRateA / e_nVmax(data.alpha, AreaRatio)
+                # equilibrium of electrons
+                # V = (bnode.region == Γ_YSZl ? data.bias : 0.0) - u[ipsi]
+                # V = reduced_voltage(u, bnode, data)
+                # TODO add the difference of the electrostatic potential or its derivative*thickness of the ISR to the "equilibrium constant for electrons"
+                # FIXME implicitly assuming the Boltzmann statistics for the ISR electrons
+                # nes = nLAus(S) / nLAu * exp(-data.Ge / kB / data.T) * AueDensity(data, V) # [# electrons/ ISR area]
+                nes = ISR_electrondensity(u, bnode, data) # [# electrons/ ISR area]
+                # TODO ISRthickness = (bnode.region  == Γ_YSZl ? data.dL : data.dR)
+                ###
+                # The surface Poisson equation is consistent with [BSE2018]
+                # (-ε_+ ∇ψ_+)⋅ν_+ (-ε_- ∇ψ_-)⋅ν_- + ISR_chargedensity = 0
+                # However, the equation for normal fluxes and the breaction for an internal node between two REVs is implemented as
+                # - (j_+ ̇ν_+ + j_- ̇ν_-) + breaction = 0
+                # thus ISR_chargedensity below, correctly, enters with a negative sign !!!
+                f[ipsi] = (data.boundary_charge_fac)*-ISR_chargedensity(nes, nVmaxs(data.alphas, AreaRatio ) * u[iyVs], AreaRatio)
+                #
+            end
+        end,
+        #
+        bstorage=function (f, u, bnode, data)
+            if bnode.region in e_ISR #[Γ_YSZl,Γ_YSZr]
+                f[iyVs] = u[iyVs]
+            end
+        end
+    )
+end
+
+# AYA_Sl_system constructor
+function AYA_Sl_system(grid; AueDensity=BoltzmannAu_ne)
+    system = VoronoiFVM.System(grid, AYA_Sl_physics(AueDensity=AueDensity), unknown_storage=:sparse)
+    #
+    enable_species!(system, ipsi, collect(e_bulk_domains))
+    enable_species!(system, iyV, [eΩ_YSZr, eΩ_YSZr])
+    enable_boundary_species!(system, iyVs, [Γ_YSZl, Γ_YSZr])
+    #
+    boundary_dirichlet!(system, ipsi, 1, 0.0)
+    boundary_dirichlet!(system, ipsi, 2, 0.0)
+    #
+    #check_allocs!(system, true)
+    return system
+end
+
+# initial values for AYA_Sl_system
+function AYA_Sl_inival(system)
+    inival = VoronoiFVM.unknowns(system, inival=nVmax(0.0) / nVmax(system))
+    inival[ipsi, :] .= 0.0
+    boundary_ids = system.grid.components[ExtendableGrids.BFaceNodes]
+    ISR_L_id = boundary_ids[3]
+	inival[iyVs, ISR_L_id] = yVs_en(system.physics.data.alphas, system.physics.data.SL)
+    if length(boundary_ids) > 3
+        ISR_R_id = boundary_ids[4]
+        inival[iyVs, ISR_R_id] = yVs_en(system.physics.data.alphas, system.physics.data.SR)
+    end
+    return inival
+end
+
+inival(cell::AYA_Sl) = AYA_Sl_inival(cell.system)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function get_stored_charge(cell::AYALG1iBoltzmann)
     # 2* because get_charge returns only Au side of left DL and there is also equivalent charge on Au on right DL.
     2*get_half_DL_charge(cell, "l")

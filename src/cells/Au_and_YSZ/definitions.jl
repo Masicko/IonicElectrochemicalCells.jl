@@ -11,6 +11,11 @@ const bulk_species = (ipsi, iyV)
 const iyVs = 3
 const surface_species = (iyVs)
 const species_names = ("ipsi", "iyV")
+# extended quantities
+const e_bulk_domains = (eΩ_Aul, eΩ_YSZl, eΩ_YSZr, eΩ_Aur) = 1, 2, 3, 4
+const e_interfaces = (eΓ_Aul, eΓ_YSZl, eΓ_YSZc, eΓ_YSZr, eΓ_Aur) = 1, 3, 4, 5, 2
+const e_ISR = (eΓ_YSZl, eΓ_YSZr)
+
 
 #=
 Grid parameters
@@ -19,14 +24,18 @@ const electrolyte_length = 1.0e-8 # YHElectrolyte
 const electrolyte_thickness = 1e-3
 const electrode_thickness = 1e-5
 const dmin = 1.0e-11
-#
-const nu = 0.93 # backward compatibility for the original model
 
 #=
 YSZ parameters
 =#
+
+#
+const nu = 0.93 # backward compatibility for the original model
+
 # lattice
 const nLYSZ = 7.46268656716418e27 # https://www.msesupplies.com/products/ysz-single-crystal?variant=31250580111418
+enLYSZ(S::Float64) = S*nLYSZ
+
 const x_frac = 0.13
 const mC = 4.0
 const mA = 8.0
@@ -42,12 +51,21 @@ const zC = zCf(x_frac)
 const zL = mC * zC - 2 * mA
 
 YSZ_charge_density(nV, x) = e0 * nLYSZ * (mC * zCf(x) + mA * zi) + e0 * zV * nV # TODO promote x_frac to YSZ parameters
-YSZ_charge_density(nV) = YSZ_charge_density(nV, x_frac)#e0*nLYSZ*(mC*zC + mA*zi + zV*nV/nLYSZ)
+YSZ_charge_density(nV) = YSZ_charge_density(nV, x_frac) #e0*nLYSZ*(mC*zC + mA*zi + zV*nV/nLYSZ)
 electroneutral_nV_YSZ(x) = -(mC * zCf(x) + mA * zi) * nLYSZ / zV
 const electroneutral_nV = electroneutral_nV_YSZ(x_frac)
 nVmax(alpha::Float64) = nLYSZ*(mA - (zC*mC)/zV*(1-alpha))
 nVmax(sys::VoronoiFVM.AbstractSystem) = nVmax(sys.physics.data.alpha)
 yV_en(alpha::Float64) = electroneutral_nV / nVmax(alpha)
+
+# extended 
+e_YSZ_charge_density(nV, x, S) = e0 * enLYSZ(S) * (mC * zCf(x) + mA * zi) + e0 * zV * nV # TODO promote x_frac to YSZ parameters
+e_YSZ_charge_density(nV, S) = e_YSZ_charge_density(nV, x_frac, S)
+e_electroneutral_nV_YSZ(x, S) = -(mC * zCf(x) + mA * zi) * enLYSZ(S) / zV
+e_electroneutral_nV(S) = e_electroneutral_nV_YSZ(x_frac, S)
+e_nVmax(alpha::Float64, S) = enLYSZ(S)*(mA - (zC*mC)/zV*(1-alpha))
+e_yV_en(alpha::Float64) = e_electroneutral_nV(S) / e_nVmax(alpha, S)
+
 
 #=
 Au (gold) domain parameters
@@ -57,22 +75,23 @@ const ze = -1.0
 
 # lattice density
 const nLAu = 1 / (4 * pi / 3 * (3.01 * a0)^3) # RM Martin, Electronic structure (eq 5.1, )
+enLAu(S) = S*nLAu
 
 # charge
 Au_charge_density(ne) = e0 * (nLAu * 1.0 + ze * ne)
-
+e_Au_charge_density(ne, S) = e0 * (enLAu(S) * 1.0 + ze * ne)
 # electroneutral concentrations
 const neutral_yeAU = 1.0
 const electroneutral_nAu = neutral_yeAU * nLAu
-
+e_electroneutral_nAu(S) = neutral_yeAU * nLAu(S)
 
 #=
 Interface specific reagion (ISR) 
 =#
 
 
-nLYSZs(S::Float64) = S*nLYSZ^(2 / 3)  # [# YSZ faces/m^2]
-nLAus(S::Float64) = S*nLAu^(2 / 3)    # [# Au faces/m^2]
+nLYSZs(S::Float64) = (enLYSZ(S))^(2 / 3)  # [# YSZ faces/m^2]
+nLAus(S::Float64) = (enLAu(S))^(2 / 3)    # [# Au faces/m^2]
 
 const mCs = 2               # [# cation sites/YSZ face]
 const mAs = 4               # [# anion sites/YSZ face]
