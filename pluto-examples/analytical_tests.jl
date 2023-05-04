@@ -63,6 +63,8 @@ begin
 	else
 		STcell = iec.get_my_top_AYALG1iBoltzmann(); 
 	end 
+
+	STcell = iec.AYA_Sl()
 	
 	std_dict = Dict(
 			:T => 800.0,
@@ -330,7 +332,7 @@ end
 # ╟─cd111a18-02a8-4e76-ab06-7d012c1692da
 # ╟─16a755fc-ec5d-4f2e-9f3a-172f279373a9
 # ╠═c5ffb51f-4591-4447-9b48-518a8c87b74c
-# ╟─a1219ce0-ba29-4760-83db-338b850624ff
+# ╠═a1219ce0-ba29-4760-83db-338b850624ff
 # ╟─8ee98e1a-a3d7-4973-85b0-ced03996a732
 # ╟─1c71ef2b-d4d6-44c3-a850-2fbe6c76129f
 # ╟─eb13fcd5-2af0-4707-ab99-40b0dd87ac16

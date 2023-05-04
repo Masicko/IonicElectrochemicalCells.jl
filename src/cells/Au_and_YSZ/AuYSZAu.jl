@@ -680,9 +680,9 @@ function AYA_Sl(grid=doublehalf_cell1D(electrode_thickness, electrolyte_thicknes
 end
 
 function get_S(edge, data)
-    if edge.region in [eΩ_Aul, eΩ_YSZl]
+    if edge.region in [Ω_Aul, e_Ω_YSZl]
         return data.SL
-    elseif edge.region in [eΩ_Aur, eΩ_YSZr]
+    elseif edge.region in [Ω_Aur, e_Ω_YSZr]
         return data.SR
     end
 end
@@ -967,7 +967,7 @@ function stateplot(cell::Union{AYALG1iBoltzmann_HALF,AYALG1iBoltzmann, AYA_Sl} ,
     Plotter.scatter!(p, [gr[boundary_id]], [U[3,boundary_id]], label="yVs_L")
     Plotter.plot!(p, gr[1:boundary_id], ye_data_L[1:boundary_id], label="ye_L")
 
-    if typeof(cell) == AYALG1iBoltzmann
+    if typeof(cell) in [AYALG1iBoltzmann, AYA_Sl]
         ye_data_R = phi_to_ye.(U[1,:])
         boundary2_id = cell.system.grid.components[ExtendableGrids.BFaceNodes][4]
         Plotter.plot!(p, gr[boundary2_id:end], ye_data_R[boundary2_id:end], label="ye_R")
