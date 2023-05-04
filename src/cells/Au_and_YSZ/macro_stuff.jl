@@ -170,7 +170,7 @@ end
 
 
 
-function chargeshow!(cell::AYALG1iBoltzmann; bend = 1.0, bstep=0.05, tend=1.0e-2)
+function chargeshow!(cell::Union{AYALG1iBoltzmann, AYA_Sl}; bend = 1.0, bstep=0.05, tend=1.0e-2)
     aux_df = DataFrame(bias = [], charge = [])
     function compute_charge(bias, cell)
         push!(aux_df, (bias, get_stored_charge(cell)))
@@ -182,7 +182,7 @@ function chargeshow!(cell::AYALG1iBoltzmann; bend = 1.0, bstep=0.05, tend=1.0e-2
     return gdf
 end
 
-function capacitance_measurement!(cell::AYALG1iBoltzmann;bend = 1.0, bstep=0.01, tend=1.0e-2)
+function capacitance_measurement!(cell::Union{AYALG1iBoltzmann, AYA_Sl};bend = 1.0, bstep=0.01, tend=1.0e-2)
     bdf = chargeshow!(cell, bend=bend+bstep, bstep=bstep, tend=tend)
     eval_capacitance!(bdf)
     delete!(bdf, [1, size(bdf)[1]])

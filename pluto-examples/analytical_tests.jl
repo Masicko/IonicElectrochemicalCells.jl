@@ -78,11 +78,14 @@ begin
 			:alphas => 0.0025,
 			:GA => 0.1*e0,
 			:Ge => -0.0*e0,
-			:SL => 1.0,
-			:SR => 1.0,
+			:SL => 0.1,
+			:SR => 0.5,
+			:DYSZ => 1.0e-7
+		
 			
 			#:boundary_charge_fac => 0.0,
 			)
+	STcell.U = inival(STcell)
 	stationary_update!(STcell,
 		std_dict
 		#act_prms_dict	
@@ -99,6 +102,9 @@ begin
 		push!(tend_storage, bias)
 	end
 end
+
+# ╔═╡ 7131d271-145d-4949-986e-0ad1583f2060
+STcell.system.physics.data.DYSZ
 
 # ╔═╡ 8ee98e1a-a3d7-4973-85b0-ced03996a732
 begin
@@ -135,18 +141,30 @@ plot_R = iec.stateplot(STcell, U_storage[iiddxxx],
 Plots.plot(plot_L, plot_R)
 end
 
+# ╔═╡ 78510040-422a-4970-a512-caa583b3d90e
+iec.get_half_DL_charge(STcell, "l")
+
 # ╔═╡ eb13fcd5-2af0-4707-ab99-40b0dd87ac16
-# if !HALF_bool
-#   
-#   # be careful! this capacitance_measurement changes STcell, specially its bias which is important later in evaluation of ISR_chargedensity
-#   
-# 	p=Plots.plot(xlabel="bias (V)", ylabel="C [F/m^2]")
-# 	gdf = iec.capacitance_measurement!(STcell, bend=0.3, bstep=0.01, tend=1.0e-2); iec.plot_capacitance(p, gdf)
-# 	p
-# end
+if !HALF_bool
+  
+  # be careful! this capacitance_measurement changes STcell, specially its bias which is important later in evaluation of ISR_chargedensity
+  
+	p=Plots.plot(xlabel="bias (V)", ylabel="C [F/m^2]")
+	gdf = iec.capacitance_measurement!(STcell, bend=0.3, bstep=0.01, tend=1.0e-2); iec.plot_capacitance(p, gdf)
+	p
+end
 
 # ╔═╡ 751270c1-3517-49b0-ad3f-e8cb86b9c6e9
 HALF_bool ? nothing : iec.get_stored_charge(STcell)
+
+# ╔═╡ 32f7d00a-fd3b-4de8-bad0-4e0dfbc1c5ac
+buc = iec.bulk_charge(STcell)
+
+# ╔═╡ c7d5000c-24ab-4c10-b9ab-9bd800a3cb94
+bac = iec.boundary_charge(STcell)
+
+# ╔═╡ 88a19671-faf7-4d8a-b579-6e9a5bf8cee2
+buc[1, 2] + buc[1, 4] + bac[1, 3] + bac[1, 4]
 
 # ╔═╡ eb734e70-844c-4f41-aed0-e4c2c0548a93
 begin 
@@ -333,10 +351,12 @@ end
 # ╟─16a755fc-ec5d-4f2e-9f3a-172f279373a9
 # ╠═c5ffb51f-4591-4447-9b48-518a8c87b74c
 # ╠═a1219ce0-ba29-4760-83db-338b850624ff
+# ╠═7131d271-145d-4949-986e-0ad1583f2060
 # ╟─8ee98e1a-a3d7-4973-85b0-ced03996a732
 # ╟─1c71ef2b-d4d6-44c3-a850-2fbe6c76129f
-# ╟─eb13fcd5-2af0-4707-ab99-40b0dd87ac16
-# ╟─9ddaf4e7-0082-4ef3-b24a-245d4ec1b73b
+# ╠═78510040-422a-4970-a512-caa583b3d90e
+# ╠═eb13fcd5-2af0-4707-ab99-40b0dd87ac16
+# ╠═9ddaf4e7-0082-4ef3-b24a-245d4ec1b73b
 # ╠═a0fefc76-fa61-4963-8ce3-f33122967e8a
 # ╠═5ea88725-75be-4bd4-a4e8-d6f103fe3e6a
 # ╠═8d2ce173-2a5c-4dde-9fe4-82d518eab8b6
@@ -350,6 +370,9 @@ end
 # ╠═4798fa96-2887-4765-bff5-f1b1c37fb259
 # ╠═b87f717e-1be7-4911-8964-de08e33af921
 # ╠═be613a89-10c2-4ddd-9844-bf1b472585d4
+# ╠═32f7d00a-fd3b-4de8-bad0-4e0dfbc1c5ac
+# ╠═c7d5000c-24ab-4c10-b9ab-9bd800a3cb94
+# ╠═88a19671-faf7-4d8a-b579-6e9a5bf8cee2
 # ╟─eb734e70-844c-4f41-aed0-e4c2c0548a93
 # ╟─653a2058-2e5c-4b1c-bd1b-ec4efd2d7989
 # ╟─4f348a1d-52b1-42ed-b5f9-18985c685b6a

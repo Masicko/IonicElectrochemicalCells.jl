@@ -871,9 +871,36 @@ inival(cell::AYA_Sl) = AYA_Sl_inival(cell.system)
 
 
 
+function get_stored_charge(cell::AYA_Sl)
+    # 2* because get_charge returns only Au side of left DL and there is also equivalent charge on Au on right DL.
+    2*get_half_DL_charge(cell, "l")
+end
 
+function get_half_DL_charge(cell::AYA_Sl, side="l")
+    QrAuL = VoronoiFVM.integrate(cell.system, cell.system.physics.reaction, cell.U) # nspec x nregion
+    
+    if side == "l"
+        bulk, bnd = Ω_Aul, Γ_YSZl  # Γ_YSZl
+    elseif side == "r"
+        bulk, bnd = Ω_Aur, Γ_YSZr  # Γ_YSZr
+    else
+        println("side = $(side) which is not \"r\" or \"l\"")
+        return throw(Exception())
+    end
+    
+    bnd_index = cell.system.grid.components[BFaceNodes][bnd]
+    data = cell.system.physics.data
+    
+    S = (bnd == Γ_YSZl ? data.SL : data.SR)
+    V = cell.U[ipsi, bnd_index] - (bnd == Γ_YSZl ? cell.U[ipsi, 1] : 0.0)
 
+    nes = nLAus(S) / nLAu * exp(-data.Ge / kB / data.T) * BoltzmannAu_ne(data, V) # [# electrons/ ISR area]
+    
+    ISRcontribution = (data.boundary_charge_fac)*e0*(nLAus(S) - nes)
+    #@show V, ISRcontribution, -QrAuL[ipsi, bulk]
 
+    return -QrAuL[ipsi, bulk] + ISRcontribution # the sign of the surface charge is opposite, see surface Poisson
+end
 
 
 

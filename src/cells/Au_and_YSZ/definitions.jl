@@ -1,7 +1,7 @@
 #=
 Domain annotation
 =#
-const Ω_Aul, Ω_YSZ, Ω_Aur = 66, 2, 3
+const Ω_Aul, Ω_YSZ, Ω_Aur = 1, 2, 3
 const bulk_domains = (Ω_Aul, Ω_YSZ, Ω_Aur)
 const Γ_Aul, Γ_YSZl, Γ_YSZr, Γ_Aur = 1, 3, 4, 2
 const interfaces = (Γ_Aul, Γ_YSZl, Γ_YSZr, Γ_Aur)
