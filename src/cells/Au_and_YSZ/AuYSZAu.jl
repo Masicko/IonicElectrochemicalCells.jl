@@ -673,24 +673,23 @@ end
 function AYA_Sl(grid=doublehalf_cell1D(electrode_thickness, electrolyte_thickness, electrode_thickness, dmin=1e-16))
     new = AYA_Sl(0.0, 0.0, 0.0, 0.0)
     new.parameters = Model((SharedParams(), YSZparams(), Auparams(), ISRparameters()))
-    new.system = AYA_Sl_system(grid, AueDensity=BoltzmannAu_ne)
+    new.system = AYA_Sl_system(grid, AueDensity=e_BoltzmannAu_ne)
     new.U = inival(new)
     new.Uold = copy(new.U)
     return new
 end
 
-# function get_S(edge, data)
-#     if edge.region in [eΩ_Aul, eΩ_YSZl]
-#         return data.SL
-#     elseif edge.region in [eΩ_Aur, eΩ_YSZr]
-#         return data.SR
-#     end
-# end
+function get_S(edge, data)
+    if edge.region in [eΩ_Aul, eΩ_YSZl]
+        return data.SL
+    elseif edge.region in [eΩ_Aur, eΩ_YSZr]
+        return data.SR
+    end
+end
 
-# e_BoltzmannAu_ne(data, V, S) = nLAu(S) * exp(-ze * e0 / kB / data.T * V)
+e_BoltzmannAu_ne(data, V, S) = enLAu(S) * exp(-ze * e0 / kB / data.T * V)
 
-AYA_Sl_physics = function (; AueDensity=BoltzmannAu_ne)
-    ayaLGp = ayaLGphys(AueDensity=AueDensity)
+AYA_Sl_physics = function (; AueDensity=e_BoltzmannAu_ne)
     return VoronoiFVM.Physics(
         data=AYALG1iBoltzmannData(),
         # bulk properties inherited from ayaLGphysics
@@ -701,25 +700,29 @@ AYA_Sl_physics = function (; AueDensity=BoltzmannAu_ne)
         flux=function (f, u, edge, data)
             if edge.region in [Ω_Aul, Ω_Aur]
                 f[ipsi] = Fick_flux(u[ipsi, 1], u[ipsi, 2], epsAu)
-            elseif edge.region in [e_Ω_YSZl, e_Ω_YSZr] #[eΩ_YSZl, eΩ_YSZr]
-                YSZfluxes!(f,u,edge,data)
+            elseif edge.region in [e_Ω_YSZl, e_Ω_YSZr]
+                f[iyV] = LGS_flux(u[iyV, 1], u[iyV, 2], u[ipsi, 1], u[ipsi, 2], data.DYSZ*get_S(edge, data), e0 * zV / kB / data.T, data.AYSZ * e0 / kB / data.T) # interaction energy A enters here
+                f[ipsi] = Fick_flux(u[ipsi, 1], u[ipsi, 2], epsYSZ)
             end
         end,
         #   
         reaction=function (f, u, node, data)
             if node.region == Ω_Aul
-                f[ipsi] = -Au_charge_density(AueDensity(data, u[ipsi]- data.bias))
+                #f[ipsi] = -Au_charge_density(AueDensity(data, u[ipsi]- data.bias))
+                f[ipsi] = -e_Au_charge_density(AueDensity(data, u[ipsi]- data.bias, data.SL), data.SL)
             elseif node.region in [e_Ω_YSZl, e_Ω_YSZr] #[eΩ_YSZl, eΩ_YSZr]
-                f[ipsi] = -YSZ_charge_density(nVmax(data.alpha) * u[iyV])   
+                #f[ipsi] = -YSZ_charge_density(nVmax(data.alpha) * u[iyV])  
+                f[ipsi] = -e_YSZ_charge_density(e_nVmax(data.alpha, get_S(node, data)) * u[iyV], get_S(node, data)) 
             elseif node.region == Ω_Aur
-                f[ipsi] = -Au_charge_density(AueDensity(data, u[ipsi] - 0))
+                #f[ipsi] = -Au_charge_density(AueDensity(data, u[ipsi] - 0))
+                f[ipsi] = -e_Au_charge_density(AueDensity(data, u[ipsi] - 0, data.SR), data.SR)
             end
         end,
         #
         storage=function (f, u, node, data)
             f[ipsi] = 0.0
-            if node.region in [e_Ω_YSZl, e_Ω_YSZr] #[eΩ_YSZl, eΩ_YSZr]
-                f[iyV] = u[iyV]
+            if node.region in [e_Ω_YSZl, e_Ω_YSZr]
+                f[iyV] = u[iyV]*get_S(node, data)
             end
         end,
 
@@ -768,8 +771,8 @@ AYA_Sl_physics = function (; AueDensity=BoltzmannAu_ne)
                 f[iyVs] = -data.kA * ReducedRateA / nVmaxs(data.alphas, AreaRatio)
                 # implementation for species
                 # - j ̇ν + breaction = 0
-                f[iyV] = data.kA * ReducedRateA / nVmax(data.alpha)
-            #f[iyV] = data.kA * ReducedRateA / e_nVmax(data.alpha, AreaRatio)
+                f[iyV] = data.kA * ReducedRateA / e_nVmax(data.alpha, AreaRatio)
+            #f[iyV] = data.kA * ReducedRateA / nVmax(data.alpha)
                 # equilibrium of electrons
                 # V = (bnode.region == Γ_YSZl ? data.bias : 0.0) - u[ipsi]
                 # V = reduced_voltage(u, bnode, data)
@@ -799,7 +802,7 @@ AYA_Sl_physics = function (; AueDensity=BoltzmannAu_ne)
 end
 
 # AYA_Sl_system constructor
-function AYA_Sl_system(grid; AueDensity=BoltzmannAu_ne)
+function AYA_Sl_system(grid; AueDensity=e_BoltzmannAu_ne)
     system = VoronoiFVM.System(grid, AYA_Sl_physics(AueDensity=AueDensity), unknown_storage=:sparse)
     #
     #enable_species!(system, ipsi, collect([eΩ_Aul, 5, eΩ_Aur]))
@@ -809,8 +812,8 @@ function AYA_Sl_system(grid; AueDensity=BoltzmannAu_ne)
     enable_species!(system, iyV, [e_Ω_YSZl, e_Ω_YSZr])
     enable_boundary_species!(system, iyVs, [Γ_YSZl, Γ_YSZr])
     #
-    boundary_dirichlet!(system, ipsi, 1, 0.0)
-    boundary_dirichlet!(system, ipsi, 2, 0.0)
+    boundary_dirichlet!(system, ipsi, Γ_Aul, 0.0)
+    boundary_dirichlet!(system, ipsi, Γ_Aur, 0.0)
     #
     #check_allocs!(system, true)
     return system
@@ -929,7 +932,7 @@ bulk_charge(cell::AbstractCell) = VoronoiFVM.integrate(cell.system, cell.system.
 boundary_charge(cell::AbstractCell) = VoronoiFVM.integrate(cell.system, cell.system.physics.breaction, cell.U, boundary=true)
 
 
-function stateplot(cell::Union{AYALG1iBoltzmann_HALF,AYALG1iBoltzmann} , U; 
+function stateplot(cell::Union{AYALG1iBoltzmann_HALF,AYALG1iBoltzmann, AYA_Sl} , U; 
     Plotter=nothing, Xscale=false,xlim=nothing, ylim=nothing,
     title = "Coverage"
     )
