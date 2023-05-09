@@ -62,7 +62,7 @@ e_YSZ_charge_density(nV, S) = e_YSZ_charge_density(nV, x_frac, S)
 e_electroneutral_nV_YSZ(x, S) = -(mC * zCf(x) + mA * zi) * enLYSZ(S) / zV
 e_electroneutral_nV(S) = e_electroneutral_nV_YSZ(x_frac, S)
 e_nVmax(alpha::Float64, S) = enLYSZ(S)*(mA - (zC*mC)/zV*(1-alpha))
-e_yV_en(alpha::Float64) = e_electroneutral_nV(S) / e_nVmax(alpha, S)
+e_yV_en(alpha::Float64, S) = e_electroneutral_nV(S) / e_nVmax(alpha, S)  # in fact, yV_en does NOT depend on rS
 
 
 #=
@@ -82,6 +82,8 @@ e_Au_charge_density(ne, S) = e0 * (enLAu(S) * 1.0 + ze * ne)
 const neutral_yeAU = 1.0
 const electroneutral_nAu = neutral_yeAU * nLAu
 e_electroneutral_nAu(S) = neutral_yeAU * nLAu(S)
+
+BoltzmannAu_ne(data, V) = nLAu * exp(-ze * e0 / kB / data.T * V)
 
 #=
 Interface specific reagion (ISR) 
@@ -104,11 +106,17 @@ ISR_chargedensity(nes, nVs, S::Float64) = e0 * (-nes + nVs * zV + ISR_staticchar
 electroneutral_nVs_YSZ(x, S::Float64) = (-mCs * zCf(x)/zV + mAs) * nLYSZs(S)
 
 nVmaxs(a::Float64, S::Float64)::Float64 = nLYSZs(S)*(-zC*mCs / zV * (1 - a) + mAs) # = nVmaxs / S_l nLYSZs(S) = (mAs - (1-a)*mCs*zC/zV)
-yVs_en(a::Float64, S::Float64) = electroneutral_nVs_YSZ(x_frac, S)/ nVmaxs(a, S)
+yVs_en(a::Float64, S::Float64) = electroneutral_nVs_YSZ(x_frac, S)/ nVmaxs(a, S) # in fact, yV_en does NOT depend on rS
 
 ISR_arearatio(bnode,data) = (bnode.region == Γ_YSZl ? data.SL : data.SR)
 reduced_voltage(u, bnode, data) = u[ipsi] - (bnode.region == Γ_YSZl ? data.bias : 0.0)
 ISR_electrondensity(u, bnode, data) = nLAus(ISR_arearatio(bnode,data)) / nLAu * exp(-data.Ge / kB / data.T) * BoltzmannAu_ne(data, reduced_voltage(u,bnode,data)) # [# electrons/ ISR area]
+
+e_ISR_electrondensity(u, bnode, data) = 
+    begin
+        S = ISR_arearatio(bnode,data)
+        nLAus(S) / enLAu(S) * exp(-data.Ge / kB / data.T) * e_BoltzmannAu_ne(data, reduced_voltage(u,bnode,data), S) # [# electrons/ ISR area]
+    end
 
 
 

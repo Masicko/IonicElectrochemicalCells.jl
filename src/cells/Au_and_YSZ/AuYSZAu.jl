@@ -352,7 +352,6 @@ ayaLGphys = function (; AueDensity=BoltzmannAu_ne)
 end
 
 # V = phi - phi_B
-BoltzmannAu_ne(data, V) = nLAu * exp(-ze * e0 / kB / data.T * V)
 
 # Thomas-Fermi-Dirac model of electrons in metal 
 # TODO check -> correct -> test
@@ -379,9 +378,6 @@ function ayaLGinival(system)
 end
 
 inival(cell::AYALGBoltzmann) = ayaLGinival(cell.system)
-
-bulk_charge(cell::AYALGBoltzmann) = VoronoiFVM.integrate(cell.system, cell.system.physics.reaction, cell.U) # nspec x nregion
-boundary_charge(cell::AYALGBoltzmann) = VoronoiFVM.integrate(cell.system, cell.system.physics.breaction, cell.U, boundary=true)
 
 function get_charge(cell::AYALGBoltzmann, side)
     QrAuL = VoronoiFVM.integrate(cell.system, cell.system.physics.reaction, cell.U) # nspec x nregion
@@ -559,6 +555,58 @@ function ayaLG1i_inival(system)
 end
 
 inival(cell::AYALG1iBoltzmann) = ayaLG1i_inival(cell.system)
+
+mutable struct whatever
+    region
+end
+
+function get_partial_charges(cell::AYALG1iBoltzmann)
+    data = cell.system.physics.data
+    X = cell.system.grid.components[ExtendableGrids.Coordinates]
+    BFNodes = cell.system.grid.components[ExtendableGrids.BFaceNodes]
+    b1_id = BFNodes[3]
+    b2_id = BFNodes[4]
+
+    U = cell.U
+
+    partial_charge_dict = Dict()
+
+    # surface
+    partial_charge_dict[:bQ_YSZ_L] = YSZ_surface_charge(U[3, b1_id], data.alphas, data.SL)
+    partial_charge_dict[:bQ_Au_L] = Au_surface_charge(
+		(1/nLAus(data.SL))*ISR_electrondensity(
+			U[:, b1_id],  dummy_bnode(Γ_YSZl), data 
+		), 
+		data.SL
+	)
+
+    partial_charge_dict[:bQ_YSZ_R] = YSZ_surface_charge(U[3, b2_id], data.alphas, data.SR)
+    partial_charge_dict[:bQ_Au_R] = Au_surface_charge(
+		(1/nLAus(data.SR))*ISR_electrondensity(
+			U[:, b2_id],  dummy_bnode(Γ_YSZr), data
+		), 
+		data.SR
+	)
+
+    # bulk
+    get_charge_from_sys(yV) = YSZ_charge_density(
+		nVmax(data.alpha) * yV
+	)
+    charge_list = get_charge_from_sys.(U[2, b1_id : b2_id])
+    X_list = X[b1_id : b2_id]
+    center = Int(round(length(X_list)/2))
+    partial_charge_dict[:nF_YSZ_L] = integrate_arrays_by_trapezoid(X_list[1:center], charge_list[1:center])
+    partial_charge_dict[:nF_YSZ_R] = integrate_arrays_by_trapezoid(X_list[center:end], charge_list[center:end])
+
+    bulk_symbols =      [:nF_Au_L,  :nF_Au_R]
+    bulk_identifiers =  [Ω_Aul,     Ω_Aur]
+    bulk_charges = bulk_charge(cell)[1, :]
+
+    [partial_charge_dict[bulk_symbols[i]] = bulk_charges[bulk_identifiers[i]] for i in 1:length(bulk_identifiers)]  
+    
+    return partial_charge_dict
+end
+
 
 
 
@@ -779,7 +827,7 @@ AYA_Sl_physics = function (; AueDensity=e_BoltzmannAu_ne)
                 # TODO add the difference of the electrostatic potential or its derivative*thickness of the ISR to the "equilibrium constant for electrons"
                 # FIXME implicitly assuming the Boltzmann statistics for the ISR electrons
                 # nes = nLAus(S) / nLAu * exp(-data.Ge / kB / data.T) * AueDensity(data, V) # [# electrons/ ISR area]
-                nes = ISR_electrondensity(u, bnode, data) # [# electrons/ ISR area]
+                nes = e_ISR_electrondensity(u, bnode, data) # [# electrons/ ISR area]
                 # TODO ISRthickness = (bnode.region  == Γ_YSZl ? data.dL : data.dR)
                 ###
                 # The surface Poisson equation is consistent with [BSE2018]
@@ -821,7 +869,7 @@ end
 
 # initial values for AYA_Sl_system
 function AYA_Sl_inival(system)
-    inival = VoronoiFVM.unknowns(system, inival=nVmax(0.0) / nVmax(system))
+    inival = VoronoiFVM.unknowns(system, inival=e_yV_en(system.physics.data.alpha, 1.0))
     inival[ipsi, :] .= 0.0
     boundary_ids = system.grid.components[ExtendableGrids.BFaceNodes]
     ISR_L_id = boundary_ids[3]
@@ -834,6 +882,45 @@ function AYA_Sl_inival(system)
 end
 
 inival(cell::AYA_Sl) = AYA_Sl_inival(cell.system)
+
+mutable struct dummy_bnode
+	region
+end
+
+function get_partial_charges(cell::AYA_Sl)
+    data = cell.system.physics.data
+    BFNodes = cell.system.grid.components[ExtendableGrids.BFaceNodes]
+    b1_id = BFNodes[3]
+    b2_id = BFNodes[4]
+
+    U = cell.U
+
+    partial_charge_dict = Dict()
+    
+    partial_charge_dict[:bQ_YSZ_L] = YSZ_surface_charge(U[3, b1_id], data.alphas, data.SL)
+    partial_charge_dict[:bQ_Au_L] = Au_surface_charge(
+		(1/nLAus(data.SL))*ISR_electrondensity(
+			U[:, b1_id],  dummy_bnode(Γ_YSZl), data 
+		), 
+		data.SL
+	)
+
+    partial_charge_dict[:bQ_YSZ_R] = YSZ_surface_charge(U[3, b2_id], data.alphas, data.SR)
+    partial_charge_dict[:bQ_Au_R] = Au_surface_charge(
+		(1/nLAus(data.SR))*ISR_electrondensity(
+			U[:, b2_id],  dummy_bnode(Γ_YSZr), data 
+		), 
+		data.SR
+	)
+
+    bulk_symbols =      [:nF_Au_L, :nF_YSZ_L,   :nF_YSZ_R,    :nF_Au_R]
+    bulk_identifiers =  [Ω_Aul,     e_Ω_YSZl,   e_Ω_YSZr,     Ω_Aur]
+    bulk_charges = bulk_charge(cell)[1, :]
+
+    [partial_charge_dict[bulk_symbols[i]] = bulk_charges[bulk_identifiers[i]] for i in 1:4]  
+    
+    return partial_charge_dict
+end
 
 
 
@@ -894,7 +981,7 @@ function get_half_DL_charge(cell::AYA_Sl, side="l")
     S = (bnd == Γ_YSZl ? data.SL : data.SR)
     V = cell.U[ipsi, bnd_index] - (bnd == Γ_YSZl ? cell.U[ipsi, 1] : 0.0)
 
-    nes = nLAus(S) / nLAu * exp(-data.Ge / kB / data.T) * BoltzmannAu_ne(data, V) # [# electrons/ ISR area]
+    nes = nLAus(S) / nLAu(S) * exp(-data.Ge / kB / data.T) * e_BoltzmannAu_ne(data, V, S) # [# electrons/ ISR area]
     
     ISRcontribution = (data.boundary_charge_fac)*e0*(nLAus(S) - nes)
     #@show V, ISRcontribution, -QrAuL[ipsi, bulk]
@@ -955,8 +1042,8 @@ function get_half_DL_charge(cell::AYALG1iBoltzmann, side="l")
     return -QrAuL[ipsi, bulk] + ISRcontribution # the sign of the surface charge is opposite, see surface Poisson
 end
 
-bulk_charge(cell::AbstractCell) = VoronoiFVM.integrate(cell.system, cell.system.physics.reaction, cell.U) # nspec x nregion
-boundary_charge(cell::AbstractCell) = VoronoiFVM.integrate(cell.system, cell.system.physics.breaction, cell.U, boundary=true)
+bulk_charge(cell::AbstractCell) = -1 .*VoronoiFVM.integrate(cell.system, cell.system.physics.reaction, cell.U) # nspec x nregion
+boundary_charge(cell::AbstractCell) = -1 .*VoronoiFVM.integrate(cell.system, cell.system.physics.breaction, cell.U, boundary=true)
 
 
 function stateplot(cell::Union{AYALG1iBoltzmann_HALF,AYALG1iBoltzmann, AYA_Sl} , U; 
