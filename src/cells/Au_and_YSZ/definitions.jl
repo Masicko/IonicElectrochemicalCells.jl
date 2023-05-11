@@ -30,8 +30,9 @@ YSZ parameters
 #
 const nu = 0.93 # backward compatibility for the original model
 
+scaling_fac = 1.0
 # lattice
-const nLYSZ = 7.46268656716418e27 # https://www.msesupplies.com/products/ysz-single-crystal?variant=31250580111418
+nLYSZ = scaling_fac*7.46268656716418e27 # https://www.msesupplies.com/products/ysz-single-crystal?variant=31250580111418
 enLYSZ(S::Float64) = S*nLYSZ
 
 const x_frac = 0.13
@@ -72,7 +73,7 @@ const epsAu = 6.9 * ε0 # Separation of the contribution of free and bound elect
 const ze = -1.0
 
 # lattice density
-const nLAu = 1 / (4 * pi / 3 * (3.01 * a0)^3) # RM Martin, Electronic structure (eq 5.1, )
+nLAu = scaling_fac* 1 / (4 * pi / 3 * (3.01 * a0)^3) # RM Martin, Electronic structure (eq 5.1, )
 enLAu(S) = S*nLAu
 
 # charge
@@ -125,6 +126,7 @@ e_ISR_electrondensity(u, bnode, data) =
 @kwdef struct SharedParams{A,B}
     T::A = Param(T0 + 800, bounds=(600, 900), name = "temperature")
     bias::B = Param(0.0, bounds=(-3.0, 3.0))
+    
 end
 @kwdef struct YSZparams{A,B,C}
     AYSZ::A = Param(0.0 * 1.0e-3, bounds=(0.0, 1e2))

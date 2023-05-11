@@ -49,7 +49,7 @@ md"""
 
 # ╔═╡ c5ffb51f-4591-4447-9b48-518a8c87b74c
 begin
-	STmy_bias = 0.5
+	STmy_bias = -0.5
 	HALF_bool = false
 end
 
@@ -70,15 +70,15 @@ begin
 			:T => 800.0,
 
 			:AYSZ => 0.0,
-			:alpha => 8.0e-2,
-			#:alpha => 8.0e-5,
+			#:alpha => 8.0e-2,
+			:alpha => 8.0e-5,
 			
 			:AYSZs => 0.0,
-			:alphas => 0.025,
-			#:alphas => 0.0025,
+			#:alphas => 0.025,
+			:alphas => 0.0025,
 			:GA => -0.1*e0,
 			:Ge => -0.0*e0,
-			:SL => 20.0,
+			:SL => 1.0,
 			:SR => 1.0,
 			:DYSZ => 1.0e-9,
 			#:DYSZ => 1.0e-7,
@@ -109,7 +109,7 @@ end
 begin
 iiddxxx = length(tend_storage)
 #@show tend_storage[iiddxxx]
-l_DL = 1.0e-9
+l_DL = 10.5e-9
 side = "L"
 if side == "L"
 	view_l = iec.electrode_thickness
@@ -124,6 +124,9 @@ iec.stateplot(STcell, U_storage[iiddxxx] ,
 	title = !HALF_bool ? "Full cell: Au | YSZ | Au" : "Half cell : Au | YSZ"
 )
 end
+
+# ╔═╡ bd995081-8d63-45f5-a73c-c6118134c41e
+iec.e_yV_en(0.5, 1.7)
 
 # ╔═╡ 1c71ef2b-d4d6-44c3-a850-2fbe6c76129f
 begin
@@ -259,6 +262,27 @@ pch[:nF_Au_R] + pch[:bQ_Au_R] + pch[:bQ_YSZ_R] + pch[:nF_YSZ_R]
 # ╔═╡ d6968767-b29e-4a4c-b19c-ee4ba76b2415
 pch[:bQ_YSZ_L] + pch[:nF_YSZ_L] + pch[:nF_YSZ_R] + pch[:bQ_YSZ_R]
 
+# ╔═╡ 473cbd06-73aa-40ee-92f1-ac4ca835274e
+
+
+# ╔═╡ ec660b26-3492-4838-ab75-c659115c629d
+pch[:nF_Au_L]
+
+# ╔═╡ 4159b677-b0d6-4ac3-a3c1-43a8a58c7de4
+pch[:bQ_Au_L]
+
+# ╔═╡ c8e11fa6-e019-4f5d-b582-b375c149fd2f
+pch[:bQ_YSZ_L]
+
+# ╔═╡ 81b61d9e-8896-4d18-bf1f-5f185f201324
+pch[:nF_YSZ_L]
+
+# ╔═╡ 6fa45bd5-3076-44f0-8c80-2beaca41f546
+pch[:nF_YSZ_R]
+
+# ╔═╡ 3a755261-58d5-4b34-b932-ea0f82d6c1b2
+pch[:bQ_YSZ_R]
+
 # ╔═╡ 653a2058-2e5c-4b1c-bd1b-ec4efd2d7989
 md"""
 ### control quantities of numerical solution on left DL
@@ -307,8 +331,11 @@ begin
 	nes_eq = iec.ISR_electrondensity(U_ISR, iec.dummy_bnode(iec.:Γ_YSZl), data)
 	yVs_eq = U[3, testing_id]
 	yes_eq = (1/iec.nLAus(data.SL))*nes_eq
+
+	nFs = iec.ISR_chargedensity(nes_eq, nVs_eq, data.SL)
+	nFs_sim(nes, nVs) = iec.ISR_chargedensity(nes, nVs, data.SL)
 	println(" --- ISR:")
-	@show yVs_eq yes_eq
+	@show yVs_eq yes_eq nFs
 end;
 
 # ╔═╡ 7926148f-39c7-405b-93e1-9ab1d0921ebd
@@ -323,8 +350,22 @@ begin
 	V_ISR_anal = iec.HALF_get_analytic_V_ISR(data, V_tot)
 	println("\n>>> relative V_ISR error: ", (V_ISR_anal  - V_ISR)/V_ISR)
 	
-	iec.HALF_test_analytical(data, V_tot, V_ISR_anal, verbose=true)	
+	iec.HALF_test_analytical_AYA_Sl(data, V_tot, V_ISR_anal, verbose=true)	
 	nothing
+end
+
+# ╔═╡ 310cfeed-bc63-4f2d-adde-87dea56ea61f
+begin
+	nVs_my = 0.10066756787496388*(iec.nVmaxs(data.alphas, data.SL ))
+	nes_my = 0.805213129442643*(iec.nLAus(data.SL))
+	nFs_Au, nFs_YSZ, nFs_tot = iec.HALF_test_analytical_AYA_Sl(data, V_tot, V_ISR_anal, return_nFs=true, verbose=false)
+	nFs_anal(nes, nVs) = nFs_YSZ(nVs, data.SL) + nFs_Au(nes, data.SL)
+	nFs_sim(nes_eq, nVs_eq), nFs_anal(nes_eq, nVs_eq), nFs_tot(nes_eq, nVs_eq, data.SL)
+	nFs_sim(nes_my, nVs_my), nFs_anal(nes_my, nVs_my), nFs_tot(nes_my, nVs_my, data.SL)
+	
+	nFs_YSZ(nVs_eq, data.SL), 
+	iec.YSZ_surface_charge(yVs_eq, data.alphas, data.SL)
+	
 end
 
 # ╔═╡ 8c35921f-ac8a-49e4-b3f5-aebb37d7dc6e
@@ -352,12 +393,13 @@ begin
 end
 
 # ╔═╡ Cell order:
-# ╟─862cbd68-d0d5-11ed-2cad-89ac2bffffc9
+# ╠═862cbd68-d0d5-11ed-2cad-89ac2bffffc9
 # ╟─cd111a18-02a8-4e76-ab06-7d012c1692da
 # ╟─16a755fc-ec5d-4f2e-9f3a-172f279373a9
 # ╠═c5ffb51f-4591-4447-9b48-518a8c87b74c
 # ╠═a1219ce0-ba29-4760-83db-338b850624ff
 # ╟─8ee98e1a-a3d7-4973-85b0-ced03996a732
+# ╠═bd995081-8d63-45f5-a73c-c6118134c41e
 # ╟─1c71ef2b-d4d6-44c3-a850-2fbe6c76129f
 # ╟─78510040-422a-4970-a512-caa583b3d90e
 # ╟─a9335d58-7109-41a7-869b-3d71fbdfec6f
@@ -377,10 +419,18 @@ end
 # ╠═13f6814e-392e-4f9a-b1c2-e64c95f8a569
 # ╠═38adbd36-94fb-4357-9dfa-fe5780f1c9f1
 # ╠═d6968767-b29e-4a4c-b19c-ee4ba76b2415
+# ╠═473cbd06-73aa-40ee-92f1-ac4ca835274e
+# ╠═ec660b26-3492-4838-ab75-c659115c629d
+# ╠═4159b677-b0d6-4ac3-a3c1-43a8a58c7de4
+# ╠═c8e11fa6-e019-4f5d-b582-b375c149fd2f
+# ╠═81b61d9e-8896-4d18-bf1f-5f185f201324
+# ╠═6fa45bd5-3076-44f0-8c80-2beaca41f546
+# ╠═3a755261-58d5-4b34-b932-ea0f82d6c1b2
 # ╟─653a2058-2e5c-4b1c-bd1b-ec4efd2d7989
-# ╟─4f348a1d-52b1-42ed-b5f9-18985c685b6a
+# ╠═4f348a1d-52b1-42ed-b5f9-18985c685b6a
 # ╟─7926148f-39c7-405b-93e1-9ab1d0921ebd
-# ╟─2772b5bb-83c5-4dad-b2c0-e3d3b8cab1b7
+# ╠═2772b5bb-83c5-4dad-b2c0-e3d3b8cab1b7
+# ╠═310cfeed-bc63-4f2d-adde-87dea56ea61f
 # ╟─8c35921f-ac8a-49e4-b3f5-aebb37d7dc6e
 # ╟─fc88ffb4-c87f-481a-b08d-717d098409b3
 # ╟─4209eb4c-104b-46eb-afc5-251f42608203

@@ -9,7 +9,7 @@ update_parameters!(cell::AbstractCell, params_dict::Dict) = update_parameters!(c
 
 function stationary_update!(cell::AbstractCell, params_dict; tend=1e-3)
     reload = false
-    for par in [:alpha, :alphas]
+    for par in [:alpha, :alphas, :SL, :SR]
         if (par ∈ keys(params_dict))
             if (getfield(cell.system.physics.data, par) != params_dict[par])
                 reload = true

@@ -26,6 +26,8 @@ include("./cells/Au_and_YSZ/common_functions.jl")
 include("./cells/Au_and_YSZ/macro_stuff.jl")
 #
 include("./cells/Au_and_YSZ/analytical_solution.jl")
+#
+include("./cells/Au_and_YSZ/inspecting_tools.jl")
 
 export YHElectrolyte, AYABoltzmann, AYALGBoltzmann, AYALG1iBoltzmann
 # methods

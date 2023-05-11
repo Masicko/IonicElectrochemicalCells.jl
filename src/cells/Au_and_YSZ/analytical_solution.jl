@@ -1,7 +1,7 @@
 
 save_sqrt(x) = ( x >= 0 ? sqrt(x) : ( x > -eps() ? 0.0 : sqrt(x) ))
 
-function HALF_test_analytical_AYA_Sl(data, V_tot, V_ISR; verbose=true)
+function HALF_test_analytical_AYA_Sl(data, V_tot, V_ISR; verbose=true, return_nFs=false)
 
     save_sqrt(x) = ( x >= 0 ? sqrt(x) : ( x > -eps() ? 0.0 : sqrt(x) ))
 
@@ -34,6 +34,7 @@ function HALF_test_analytical_AYA_Sl(data, V_tot, V_ISR; verbose=true)
     #=
     ### Au bulk ###
     =#
+
     a0  = 5.29177210903e-11       # m   Au lattice constant
     epsAu = 6.9 * ε0 # Separation of the contribution of free and bound electrons into real and imaginary parts of the dielectric constant of gold.     Shklyarevskii, I. N.; Pakhmov, P. L. USSR. Optika i Spektroskopiya  (1973),  34(1),  163-6.
     ze = -1.0
@@ -129,11 +130,11 @@ function HALF_test_analytical_AYA_Sl(data, V_tot, V_ISR; verbose=true)
     
     # surface
     KV = exp(-data.GA / data.T / kB )
-    nVs_eq(V, S)  = nVs_max(data.alphas, rS)* (KV*yV_eq(V))/(yV_eq(V)*(KV -1) + 1)
-    nes_eq(V, S) = nLs_Au(rS) * exp((-data.Ge - ze*e0*V)/(kB*T))
+    yVs_eq(V)  = (KV*yV_eq(V))/(yV_eq(V)*(KV -1) + 1)
+    yes_eq(V) =  exp((-data.Ge - ze*e0*V)/(kB*T))
     #
-    yVs_eq(V, S) = nVs_eq(V, S)/nVs_max(data.alphas, rS)
-    yes_eq(V, S) = nes_eq(V, S)/nLs_Au(rS)
+    nVs_eq(V, rS)  = nVs_max(data.alphas, rS)* yVs_eq(V)
+    nes_eq(V, rS) = nLs_Au(rS) * yes_eq(V)
 
     nFs(nes, nVs, rS) = data.boundary_charge_fac*nFs_tot(nes, nVs, rS)
     
@@ -157,10 +158,76 @@ function HALF_test_analytical_AYA_Sl(data, V_tot, V_ISR; verbose=true)
         println(" --- Au side:")
         @show ye_eq(U_Au(V_ISR)) dphi_dx_Au(U_Au(V_ISR))
         println(" --- ISR:")
-        @show yVs_eq(U_YSZ(V_ISR), rS) yes_eq(U_Au(V_ISR), rS)
+        @show yVs_eq(U_YSZ(V_ISR)) yes_eq(U_Au(V_ISR))
+        @show nFs(  nes_eq(U_Au(V_ISR), rS),        nVs_eq(U_YSZ(V_ISR), rS),       rS)
     end
-    return poisson_eq
+    if return_nFs   
+        return nFs_Au, nFs_YSZ, nFs_tot
+    else
+        return poisson_eq
+    end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 function HALF_test_analytical(data, V_tot, V_ISR; verbose=true)
