@@ -70,16 +70,16 @@ begin
 			:T => 800.0,
 
 			:AYSZ => 0.0,
-			#:alpha => 8.0e-2,
-			:alpha => 8.0e-5,
+			:alpha => 8.0e-2,
+			#:alpha => 8.0e-5,
 			
 			:AYSZs => 0.0,
-			#:alphas => 0.025,
-			:alphas => 0.0025,
+			:alphas => 0.025,
+			#:alphas => 0.0025,
 			:GA => -0.1*e0,
 			:Ge => -0.0*e0,
 			:SL => 1.0,
-			:SR => 1.0,
+			:SR => 0.1,
 			:DYSZ => 1.0e-9,
 			#:DYSZ => 1.0e-7,
 		
@@ -124,9 +124,6 @@ iec.stateplot(STcell, U_storage[iiddxxx] ,
 	title = !HALF_bool ? "Full cell: Au | YSZ | Au" : "Half cell : Au | YSZ"
 )
 end
-
-# ╔═╡ bd995081-8d63-45f5-a73c-c6118134c41e
-iec.e_yV_en(0.5, 1.7)
 
 # ╔═╡ 1c71ef2b-d4d6-44c3-a850-2fbe6c76129f
 begin
@@ -229,12 +226,6 @@ BUCH = iec.bulk_charge(STcell)[1,:]
 # ╔═╡ 0c939603-58f1-4c10-955b-44f10d5b9d77
 BACH = iec.boundary_charge(STcell)[1,:]
 
-# ╔═╡ aff3b380-0fb9-4f20-8efd-c26c9ee07198
-BUCH[1] + BUCH[2] + BACH[3]
-
-# ╔═╡ 147e6ed3-fbb0-448b-8779-9be41e85221e
-BUCH[4] + BUCH[3] + BACH[4]
-
 # ╔═╡ 59b83092-cfbc-4929-8edb-cde267a4866b
 pch[:nF_Au_L] + pch[:bQ_Au_L]
 
@@ -261,9 +252,6 @@ pch[:nF_Au_R] + pch[:bQ_Au_R] + pch[:bQ_YSZ_R] + pch[:nF_YSZ_R]
 
 # ╔═╡ d6968767-b29e-4a4c-b19c-ee4ba76b2415
 pch[:bQ_YSZ_L] + pch[:nF_YSZ_L] + pch[:nF_YSZ_R] + pch[:bQ_YSZ_R]
-
-# ╔═╡ 473cbd06-73aa-40ee-92f1-ac4ca835274e
-
 
 # ╔═╡ ec660b26-3492-4838-ab75-c659115c629d
 pch[:nF_Au_L]
@@ -399,17 +387,14 @@ end
 # ╠═c5ffb51f-4591-4447-9b48-518a8c87b74c
 # ╠═a1219ce0-ba29-4760-83db-338b850624ff
 # ╟─8ee98e1a-a3d7-4973-85b0-ced03996a732
-# ╠═bd995081-8d63-45f5-a73c-c6118134c41e
 # ╟─1c71ef2b-d4d6-44c3-a850-2fbe6c76129f
 # ╟─78510040-422a-4970-a512-caa583b3d90e
 # ╟─a9335d58-7109-41a7-869b-3d71fbdfec6f
 # ╟─eb13fcd5-2af0-4707-ab99-40b0dd87ac16
-# ╠═9ddaf4e7-0082-4ef3-b24a-245d4ec1b73b
+# ╟─9ddaf4e7-0082-4ef3-b24a-245d4ec1b73b
 # ╠═86b548ce-6cb7-4810-9a6d-f2895208e0a5
 # ╠═f42113d5-6c40-415b-9463-dabd3a939df3
 # ╠═0c939603-58f1-4c10-955b-44f10d5b9d77
-# ╠═aff3b380-0fb9-4f20-8efd-c26c9ee07198
-# ╠═147e6ed3-fbb0-448b-8779-9be41e85221e
 # ╠═59b83092-cfbc-4929-8edb-cde267a4866b
 # ╠═54a9bff8-2693-4b6a-bd51-e78ffd6dfec9
 # ╠═dce1dab7-ee31-46f0-b60d-3a180e820deb
@@ -419,7 +404,6 @@ end
 # ╠═13f6814e-392e-4f9a-b1c2-e64c95f8a569
 # ╠═38adbd36-94fb-4357-9dfa-fe5780f1c9f1
 # ╠═d6968767-b29e-4a4c-b19c-ee4ba76b2415
-# ╠═473cbd06-73aa-40ee-92f1-ac4ca835274e
 # ╠═ec660b26-3492-4838-ab75-c659115c629d
 # ╠═4159b677-b0d6-4ac3-a3c1-43a8a58c7de4
 # ╠═c8e11fa6-e019-4f5d-b582-b375c149fd2f

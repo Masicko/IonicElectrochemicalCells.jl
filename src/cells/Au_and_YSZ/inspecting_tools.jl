@@ -97,9 +97,9 @@ function test_consistency()
 			#:kA => 1.0e0
 	)
     STcell, Ccell = both_get_cells(std_dict);
-    #both_stationary_update!(STcell, Ccell, Dict(:SL => 0.5, :SR => 0.5))
-    #stationary_update!(STcell, Dict(:bias => 0.2))
-   
+    stationary_update!(STcell, Dict(:SL => 0.5, :SR => 0.5))
+    both_stationary_update!(STcell, Ccell, Dict(:bias => 0.2))
+    
     get_comparable_quantities(STcell)
     get_comparable_quantities(Ccell)
 

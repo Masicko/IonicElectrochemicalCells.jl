@@ -819,7 +819,7 @@ AYA_Sl_physics = function (; AueDensity=e_BoltzmannAu_ne)
                 f[iyVs] = -data.kA * ReducedRateA / nVmaxs(data.alphas, AreaRatio)
                 # implementation for species
                 # - j ̇ν + breaction = 0
-                f[iyV] = data.kA * ReducedRateA / e_nVmax(data.alpha, AreaRatio)
+                f[iyV] = AreaRatio*data.kA * ReducedRateA / e_nVmax(data.alpha, AreaRatio)
             #f[iyV] = data.kA * ReducedRateA / nVmax(data.alpha)
                 # equilibrium of electrons
                 # V = (bnode.region == Γ_YSZl ? data.bias : 0.0) - u[ipsi]
@@ -981,7 +981,7 @@ function get_half_DL_charge(cell::AYA_Sl, side="l")
     S = (bnd == Γ_YSZl ? data.SL : data.SR)
     V = cell.U[ipsi, bnd_index] - (bnd == Γ_YSZl ? cell.U[ipsi, 1] : 0.0)
 
-    nes = nLAus(S) / nLAu(S) * exp(-data.Ge / kB / data.T) * e_BoltzmannAu_ne(data, V, S) # [# electrons/ ISR area]
+    nes = nLAus(S) / enLAu(S) * exp(-data.Ge / kB / data.T) * e_BoltzmannAu_ne(data, V, S) # [# electrons/ ISR area]
     
     ISRcontribution = (data.boundary_charge_fac)*e0*(nLAus(S) - nes)
     #@show V, ISRcontribution, -QrAuL[ipsi, bulk]
