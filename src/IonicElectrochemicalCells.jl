@@ -29,7 +29,7 @@ include("./cells/Au_and_YSZ/analytical_solution.jl")
 #
 include("./cells/Au_and_YSZ/inspecting_tools.jl")
 
-export YHElectrolyte, AYABoltzmann, AYALGBoltzmann, AYALG1iBoltzmann
+export YHElectrolyte, AYABoltzmann, AYALGBoltzmann, AYALG1iBoltzmann, AYA_Sl
 # methods
 export inival, biasshow!, biastest!, stationary_update!, update_parameters!, AuL_charge, get_stored_charge
 
