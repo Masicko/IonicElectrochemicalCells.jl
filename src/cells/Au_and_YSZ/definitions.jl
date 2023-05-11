@@ -134,7 +134,7 @@ end
     alpha::C = Param(0.005, bounds=(0.0, 1.0))
 end
 @kwdef struct Auparams{A}
-    DAu::A = Param(1.0e-8, bounds=(1e-5, 1e2))
+    DAu::A = Param(1.0e-7, bounds=(1e-5, 1e2))
 end
 
 @kwdef struct ISRparameters{A,B,C,D,E,F,G,H,I,J}
@@ -142,7 +142,7 @@ end
     AYSZs::B = Param(0.0, bounds=(0.0,1.0)) # [eV] interaction energy of vacancies at ISR
     GA::C = Param(0.0 * e0, bounds=(0.0,1.0)) # [eV] Gibbs energy of vacancy adsorption
     Ge::D = Param(0.0 * e0, bounds=(0.0,1.0)) # [eV] Gibbs energy of electron adsorption
-    kA::E = Param(1.0e25, bounds=(0.0,1.0)) # [1/m^2/s] rate of vacancy adsorption
+    kA::E = Param(1.0e26, bounds=(0.0,1.0)) # [1/m^2/s] rate of vacancy adsorption
     dL::F = Param(1.0 * nm, bounds=(0.0,1.0)) # [nm] thickness of the left ISR
     dR::G = Param(1.0 * nm, bounds=(0.0,1.0)) # [nm] thickness of the right ISR
     SL::H = Param(1.0, bounds=(0.0,1.0)) # [1] (ISR area)/(cross section area) -- left

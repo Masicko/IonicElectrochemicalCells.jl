@@ -774,31 +774,6 @@ AYA_Sl_physics = function (; AueDensity=e_BoltzmannAu_ne)
             end
         end,
 
-        # flux=function (f, u, edge, data)
-        #     if edge.region in (eΩ_Aul, eΩ_Aur)
-        #         f[ipsi] = Fick_flux(u[ipsi, 1], u[ipsi, 2], epsAu)
-        #     elseif edge.region in (eΩ_YSZl, eΩ_YSZr)
-        #         f[iyV] = LGS_flux(u[iyV, 1], u[iyV, 2], u[ipsi, 1], u[ipsi, 2], data.DYSZ*get_S(edge, data), e0 * zV / kB / data.T, data.AYSZ * e0 / kB / data.T) # interaction energy A enters here
-        #         f[ipsi] = Fick_flux(u[ipsi, 1], u[ipsi, 2], epsYSZ)
-        #     end
-        # end,
-        # reaction=function (f, u, node, data)
-        #     if node.region == eΩ_Aul
-        #         f[ipsi] = -e_Au_charge_density(AueDensity(data, u[ipsi]- data.bias, data.SL), data.SL)
-        #     elseif node.region == eΩ_YSZl
-        #         f[ipsi] = -e_YSZ_charge_density(e_nVmax(data.alpha, data.SL) * u[iyV], data.SL)
-        #     elseif node.region == eΩ_YSZr
-        #         f[ipsi] = -e_YSZ_charge_density(e_nVmax(data.alpha, data.SR) * u[iyV], data.SR)   
-        #     elseif node.region == eΩ_Aur
-        #         f[ipsi] = -e_Au_charge_density(AueDensity(data, u[ipsi] - 0, data.SR), data.SR)
-        #     end
-        # end,
-        # storage=function (f, u, node, data)
-        #     f[ipsi] = 0.0
-        #     if node.region in (eΩ_YSZl, eΩ_YSZr)
-        #         f[iyV] = u[iyV]*get_S(node, data)
-        #     end
-        # end,
         breaction=function (f, u, bnode, data)
             #if bnode.region in e_ISR
             if bnode.region in ISR
