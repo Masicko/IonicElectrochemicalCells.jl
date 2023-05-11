@@ -2,7 +2,7 @@
 
 julia_version = "1.8.5"
 manifest_format = "2.0"
-project_hash = "559984cca5156fd38c9b375f728c9b3d15b0109b"
+project_hash = "8c5c6d5c79cdd4e5b99d53e7eff279d3a1b3b1d3"
 
 [[deps.AbstractAlgebra]]
 deps = ["GroupsCore", "InteractiveUtils", "LinearAlgebra", "MacroTools", "Markdown", "Random", "RandomExtensions", "SparseArrays", "Test"]
@@ -625,12 +625,6 @@ deps = ["Tricks"]
 git-tree-sha1 = "c47c5fa4c5308f27ccaac35504858d8914e102f9"
 uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
 version = "0.9.4"
-
-[[deps.IEC_const]]
-deps = ["CompositeStructs", "DataFrames", "DocStringExtensions", "ExtendableGrids", "Markdown", "ModelParameters", "Optim", "Plots", "VoronoiFVM"]
-path = "../IEC_const"
-uuid = "4be2cf16-ed9d-4586-84a2-55065cdeea4b"
-version = "0.1.0"
 
 [[deps.IOCapture]]
 deps = ["Logging", "Random"]
