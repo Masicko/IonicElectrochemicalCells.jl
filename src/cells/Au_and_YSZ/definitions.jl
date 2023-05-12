@@ -14,6 +14,13 @@ const species_names = ("ipsi", "iyV")
 # extended quantities
 const e_Ω_YSZl, e_Ω_YSZr = 2, 4
 
+function get_S(edge, data)
+    if edge.region in [Ω_Aul, e_Ω_YSZl]
+        return data.SL
+    elseif edge.region in [Ω_Aur, e_Ω_YSZr]
+        return data.SR
+    end
+end
 
 #=
 Grid parameters

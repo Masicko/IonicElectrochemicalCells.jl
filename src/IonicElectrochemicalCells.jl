@@ -20,12 +20,14 @@ include("units.jl");                export kB, Planck_constant, mₑ, e0, ε0, N
 # cells
 ### Au_YSZ cell
 include("./cells/Au_and_YSZ/definitions.jl")
+include("./cells/Au_and_YSZ/common_base.jl")
 include("./cells/Au_and_YSZ/solver_control.jl")
+include("./cells/Au_and_YSZ/model_AYA_Sl.jl")
 include("./cells/Au_and_YSZ/AuYSZAu.jl")
-include("./cells/Au_and_YSZ/common_functions.jl")
-include("./cells/Au_and_YSZ/macro_stuff.jl")
+include("./cells/Au_and_YSZ/common_postprocessing.jl")
+#include("./cells/Au_and_YSZ/dev_stuff.jl")
 #
-include("./cells/Au_and_YSZ/analytical_solution.jl")
+#include("./cells/Au_and_YSZ/analytical_solution.jl")
 #
 #include("./cells/Au_and_YSZ/inspecting_tools.jl")
 
