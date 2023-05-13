@@ -37,10 +37,10 @@ YSZ parameters
 #
 const nu = 0.93 # backward compatibility for the original model
 
-scaling_fac = 1.0
+scaling_fac::Float64 = 1.0
 # lattice
-nLYSZ = scaling_fac*7.46268656716418e27 # https://www.msesupplies.com/products/ysz-single-crystal?variant=31250580111418
-enLYSZ(S::Float64) = S*nLYSZ
+nLYSZ::Float64 = scaling_fac*7.46268656716418e27 # https://www.msesupplies.com/products/ysz-single-crystal?variant=31250580111418
+enLYSZ(S::Float64)::Float64 = S*nLYSZ
 
 const x_frac = 0.13
 const mC = 4.0
@@ -80,8 +80,8 @@ const epsAu = 6.9 * ε0 # Separation of the contribution of free and bound elect
 const ze = -1.0
 
 # lattice density
-nLAu = scaling_fac* 1 / (4 * pi / 3 * (3.01 * a0)^3) # RM Martin, Electronic structure (eq 5.1, )
-enLAu(S) = S*nLAu
+nLAu::Float64 = scaling_fac* 1 / (4 * pi / 3 * (3.01 * a0)^3) # RM Martin, Electronic structure (eq 5.1, )
+enLAu(S)::Float64 = S*nLAu
 
 # charge
 Au_charge_density(ne) = e0 * (nLAu * 1.0 + ze * ne)

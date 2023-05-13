@@ -107,7 +107,7 @@ function AYA_Sl_system(grid; AueDensity=e_BoltzmannAu_ne)
     boundary_dirichlet!(system, ipsi, Γ_Aul, 0.0)
     boundary_dirichlet!(system, ipsi, Γ_Aur, 0.0)
     #
-    #check_allocs!(system, true)
+    check_allocs!(system, true)
     return system
 end
 
