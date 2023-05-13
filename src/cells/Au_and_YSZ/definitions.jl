@@ -15,9 +15,9 @@ const species_names = ("ipsi", "iyV")
 const e_Ω_YSZl, e_Ω_YSZr = 2, 4
 
 function get_S(edge, data)
-    if edge.region in [Ω_Aul, e_Ω_YSZl]
+    if edge.region in (Ω_Aul, e_Ω_YSZl)
         return data.SL
-    elseif edge.region in [Ω_Aur, e_Ω_YSZr]
+    elseif edge.region in (Ω_Aur, e_Ω_YSZr)
         return data.SR
     end
 end
@@ -37,9 +37,9 @@ YSZ parameters
 #
 const nu = 0.93 # backward compatibility for the original model
 
-scaling_fac::Float64 = 1.0
+const scaling_fac::Float64 = 1.0
 # lattice
-nLYSZ::Float64 = scaling_fac*7.46268656716418e27 # https://www.msesupplies.com/products/ysz-single-crystal?variant=31250580111418
+const nLYSZ::Float64 = scaling_fac*7.46268656716418e27 # https://www.msesupplies.com/products/ysz-single-crystal?variant=31250580111418
 enLYSZ(S::Float64)::Float64 = S*nLYSZ
 
 const x_frac = 0.13
@@ -80,8 +80,8 @@ const epsAu = 6.9 * ε0 # Separation of the contribution of free and bound elect
 const ze = -1.0
 
 # lattice density
-nLAu::Float64 = scaling_fac* 1 / (4 * pi / 3 * (3.01 * a0)^3) # RM Martin, Electronic structure (eq 5.1, )
-enLAu(S)::Float64 = S*nLAu
+const nLAu::Float64 = scaling_fac* 1 / (4 * pi / 3 * (3.01 * a0)^3) # RM Martin, Electronic structure (eq 5.1, )
+enLAu(S::Float64)::Float64 = S*nLAu
 
 # charge
 Au_charge_density(ne) = e0 * (nLAu * 1.0 + ze * ne)
