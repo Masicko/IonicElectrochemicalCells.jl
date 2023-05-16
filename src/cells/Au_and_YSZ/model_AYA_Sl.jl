@@ -46,7 +46,7 @@ AYA_Sl_physics = function (; AueDensity=e_BoltzmannAu_ne)
         storage=function (f, u, node, data)
             f[ipsi] = 0.0
             if node.region in (e_Ω_YSZl, e_Ω_YSZr)
-                f[iyV] = u[iyV]*1.0 #get_S(node, data)
+                f[iyV] = u[iyV]*get_S(node, data)
             end
         end,
 

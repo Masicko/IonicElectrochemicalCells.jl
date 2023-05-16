@@ -50,14 +50,15 @@ function main(;plot_bool = false)
             #extra_slow_prms,
             ]
         Testcell = iec.AYA_Sl()
-        try
+        time = @elapsed try
             stationary_update!(Testcell, prms_sym, tend=1.0e-2)
             testsim_df = iec.capacitance_measurement!(Testcell, bend=0.3, bstep=0.05, tend=1.0e-0)    
             plot_bool && Plots.plot(testsim_df[:, :bias], 1.0 .*testsim_df[:, :capacitance])
-            println("ok")
+            print("ok    ")
         catch e
-            println(e)
+            print(e, "   ")
         end
+        println(" TIME: ",time)
     end
 end
 
