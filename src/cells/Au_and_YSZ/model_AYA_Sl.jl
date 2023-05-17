@@ -178,6 +178,27 @@ function get_partial_charges(cell::AYA_Sl)
     return partial_charge_dict
 end
 
+function test_partial_charges_full_cell(pch)
+    
+    tol = 1.0e-11
+    return (
+        # DLs
+        abs(pch[:nF_Au_L] + pch[:bQ_Au_L] + pch[:nF_YSZ_L] + pch[:bQ_YSZ_L]) < tol 
+        && abs(pch[:nF_Au_R] + pch[:bQ_Au_R] + pch[:nF_YSZ_R] + pch[:bQ_YSZ_R]) < tol
+        
+        # L ans R incoming charge from electrons
+        && abs(pch[:nF_Au_L] + pch[:bQ_Au_L] + pch[:nF_Au_R] + pch[:bQ_Au_R]) < tol
+
+        # YSZ
+        && abs(pch[:nF_YSZ_L] + pch[:bQ_YSZ_L] + pch[:nF_YSZ_R] + pch[:bQ_YSZ_R]) < tol
+    )
+end
+
+function test_partial_charges(cell::AYA_Sl)
+    pch = get_partial_charges(cell)
+    test_partial_charges_full_cell(pch)
+end
+
 
 function get_stored_charge(cell::AYA_Sl)
     # 2* because get_charge returns only Au side of left DL and there is also equivalent charge on Au on right DL.

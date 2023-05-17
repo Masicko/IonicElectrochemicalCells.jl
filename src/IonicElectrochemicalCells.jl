@@ -27,7 +27,7 @@ include("./cells/Au_and_YSZ/AuYSZAu.jl")
 include("./cells/Au_and_YSZ/common_postprocessing.jl")
 #include("./cells/Au_and_YSZ/dev_stuff.jl")
 #
-#include("./cells/Au_and_YSZ/analytical_solution.jl")
+include("./cells/Au_and_YSZ/analytical_solution.jl")
 #
 #include("./cells/Au_and_YSZ/inspecting_tools.jl")
 
