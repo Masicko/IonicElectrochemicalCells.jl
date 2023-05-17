@@ -15,7 +15,7 @@ function main(;plot_bool = false)
         :GA => 0.4*e0, 
         :SL => 0.1,
         :SR => 0.7, 
-        :T => 800,
+        :T => 800.0,
         :Ge => 0.0e0,
         :DYSZ => 1.0e-6,
         :kA => 1.0e25
@@ -24,7 +24,7 @@ function main(;plot_bool = false)
     slow_prms = Dict(
         :AYSZ => 1.8279200439453123, 
         :AYSZs => 7.838887329101563, 
-        :alpha => 1.913371568830365e-6, 
+        :alpha => 1.913371568830365e-7, 
         :alphas => 6.79157052489046e-7, 
         :GA => 4.635985709513672e-20,
         :SL => 0.49561767578125004, 
@@ -52,8 +52,12 @@ function main(;plot_bool = false)
         Testcell = iec.AYA_Sl()
         time = @elapsed try
             stationary_update!(Testcell, prms_sym, tend=1.0e-2)
-            testsim_df = iec.capacitance_measurement!(Testcell, bend=0.3, bstep=0.05, tend=1.0e-0)    
+            testsim_df = iec.capacitance_measurement!(Testcell, bend=0.3, bstep=0.05, tend=1.0e-0) 
+            #
+            @show iec.test_partial_charges(Testcell) 
+            #
             plot_bool && Plots.plot(testsim_df[:, :bias], 1.0 .*testsim_df[:, :capacitance])
+            @show testsim_df
             print("ok    ")
         catch e
             print(e, "   ")

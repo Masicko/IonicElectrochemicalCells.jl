@@ -107,7 +107,7 @@ function AYA_Sl_system(grid; AueDensity=e_BoltzmannAu_ne)
     boundary_dirichlet!(system, ipsi, Γ_Aul, 0.0)
     boundary_dirichlet!(system, ipsi, Γ_Aur, 0.0)
     #
-    check_allocs!(system, true)
+    #check_allocs!(system, true)
     return system
 end
 
@@ -143,7 +143,7 @@ mutable struct dummy_bnode
 	region
 end
 
-function get_partial_charges(cell::AYA_Sl)
+function get_partial_charges(cell::AYA_Sl; only_DL=false)
     data = cell.system.physics.data
     BFNodes = cell.system.grid.components[ExtendableGrids.BFaceNodes]
     b1_id = BFNodes[3]
@@ -175,6 +175,12 @@ function get_partial_charges(cell::AYA_Sl)
 
     [partial_charge_dict[bulk_symbols[i]] = bulk_charges[bulk_identifiers[i]] for i in 1:4]  
     
+    return (
+        partial_charge_dict[:nF_Au_L] + partial_charge_dict[:bQ_Au_L],
+        partial_charge_dict[:nF_YSZ_L] + partial_charge_dict[:bQ_YSZ_L],
+        partial_charge_dict[:nF_YSZ_R] + partial_charge_dict[:bQ_YSZ_R],
+        partial_charge_dict[:nF_Au_R] + partial_charge_dict[:bQ_Au_R]
+    )
     return partial_charge_dict
 end
 

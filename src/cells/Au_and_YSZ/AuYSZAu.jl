@@ -244,7 +244,7 @@ function ayasystem(grid)
     boundary_dirichlet!(system, dspec, 1, neutral_yeAU)
     boundary_dirichlet!(system, dspec, 2, neutral_yeAU)
     #
-    check_allocs!(system, true)
+    #check_allocs!(system, true)
     return system, psi, dspec
 end
 
@@ -367,7 +367,7 @@ function ayasystemLG(grid; AueDensity=BoltzmannAu_ne)
     boundary_dirichlet!(system, ipsi, 1, 0.0)
     boundary_dirichlet!(system, ipsi, 2, 0.0)
     #
-    check_allocs!(system, true)
+    #check_allocs!(system, true)
     return system
 end
 
@@ -537,7 +537,7 @@ function ayasystemLG1i(grid; AueDensity=BoltzmannAu_ne)
     boundary_dirichlet!(system, ipsi, 1, 0.0)
     boundary_dirichlet!(system, ipsi, 2, 0.0)
     #
-    #check_allocs!(system, true)
+    ##check_allocs!(system, true)
     return system
 end
 # initial values for ayasystemLGi1
@@ -688,7 +688,7 @@ function ayasystemLG1i_HALF(grid, AueDensity=BoltzmannAu_ne)
     boundary_dirichlet!(system, ipsi, 2, 0.0)
     #boundary_dirichlet!(system, iyV, 2, yV_en(system.physics.data.alpha))
     #
-    check_allocs!(system, true)
+    #check_allocs!(system, true)
     return system
 end
 

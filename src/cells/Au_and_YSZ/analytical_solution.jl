@@ -351,6 +351,19 @@ end
 
 Base.showerror(io::IO, e::TestError) = print(io, e.text)
 
+function test_one_AYA_Sl_cell(STcell::AYA_Sl)
+    data = STcell.system.physics.data
+    testing_id = STcell.system.grid.components[ExtendableGrids.BFaceNodes][3]
+    phi_ISR = STcell.U[1, testing_id]
+    phi_L = STcell.U[1, 1]
+    phi_R = STcell.U[1, Int(round(end/2 - 2))]
+    V_tot = phi_L - phi_R
+    V_ISR = phi_ISR - phi_R
+    #@show phi_R
+    rel_phi_err = (HALF_get_analytic_V_ISR__AYA_Sl(data, V_tot) - V_ISR)/V_ISR
+    return rel_phi_err
+end
+
 function test_AYA_Sl_cell()
     STcell = AYA_Sl()
     stationary_update!(STcell,Dict([
@@ -373,15 +386,7 @@ function test_AYA_Sl_cell()
         if !test_partial_charges(STcell)
             throw(TestError("TestError: Partial charges are not allright"))
         end
-        data = STcell.system.physics.data
-        testing_id = STcell.system.grid.components[ExtendableGrids.BFaceNodes][3]
-        phi_ISR = STcell.U[1, testing_id]
-        phi_L = STcell.U[1, 1]
-        phi_R = STcell.U[1, Int(round(end/2 - 2))]
-        V_tot = phi_L - phi_R
-        V_ISR = phi_ISR - phi_R
-        #@show phi_R
-        rel_phi_err = (HALF_get_analytic_V_ISR__AYA_Sl(data, V_tot) - V_ISR)/V_ISR
+        rel_phi_err = test_one_AYA_Sl_cell(STcell::AYA_Sl)
         #@show bias, rel_phi_err
         push!(rel_err_storage, rel_phi_err)
     end

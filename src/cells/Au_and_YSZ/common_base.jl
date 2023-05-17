@@ -22,9 +22,9 @@ function stationary_update!(cell::AbstractCell, params_dict; tend=1e-3)
         cell.U = inival(cell) # no re-allocations
     end
     tsol = VoronoiFVM.solve(
-        cell.U,
         cell.system,
-        [0.0, tend],
+        inival=cell.U,
+        times=[0.0, tend],
         control=control
     )
     cell.U .= tsol[end]
