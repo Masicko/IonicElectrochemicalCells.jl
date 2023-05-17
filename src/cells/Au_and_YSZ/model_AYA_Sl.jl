@@ -175,12 +175,15 @@ function get_partial_charges(cell::AYA_Sl; only_DL=false)
 
     [partial_charge_dict[bulk_symbols[i]] = bulk_charges[bulk_identifiers[i]] for i in 1:4]  
     
-    return (
-        partial_charge_dict[:nF_Au_L] + partial_charge_dict[:bQ_Au_L],
-        partial_charge_dict[:nF_YSZ_L] + partial_charge_dict[:bQ_YSZ_L],
-        partial_charge_dict[:nF_YSZ_R] + partial_charge_dict[:bQ_YSZ_R],
-        partial_charge_dict[:nF_Au_R] + partial_charge_dict[:bQ_Au_R]
-    )
+    if only_DL
+        return (
+            partial_charge_dict[:nF_Au_L] + partial_charge_dict[:bQ_Au_L],
+            partial_charge_dict[:nF_YSZ_L] + partial_charge_dict[:bQ_YSZ_L],
+            partial_charge_dict[:nF_YSZ_R] + partial_charge_dict[:bQ_YSZ_R],
+            partial_charge_dict[:nF_Au_R] + partial_charge_dict[:bQ_Au_R]
+        )
+    end
+
     return partial_charge_dict
 end
 
