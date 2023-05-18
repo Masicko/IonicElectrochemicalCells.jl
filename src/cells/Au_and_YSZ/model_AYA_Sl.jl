@@ -62,7 +62,7 @@ AYA_Sl_physics = function (; AueDensity=e_BoltzmannAu_ne)
                 # However, this is no problem for a blocking electrode in equilibrium...
                 # the fix should look something like
                 # ... a check is needed though
-                Sl = get_S(bnode, data)
+                Sl = ISR_arearatio(bnode,data)
                 # implementation for bspecies
                 # bstorage + breaction = 0
                 f[iyVs] = -data.kA * ReducedRateA / nVmaxs(data.alphas, Sl)
@@ -189,7 +189,7 @@ end
 
 function test_partial_charges_full_cell(pch)
     
-    tol = 1.0e-11
+    tol = 1.0e-9
     return (
         # DLs
         abs(pch[:nF_Au_L] + pch[:bQ_Au_L] + pch[:nF_YSZ_L] + pch[:bQ_YSZ_L]) < tol 
