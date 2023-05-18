@@ -22,7 +22,7 @@ function main(;plot_bool = false)
     ]);
 
     slow_prms = Dict(
-        :AYSZ => 1.8279200439453123, 
+        :AYSZ => 7.8279200439453123, 
         :AYSZs => 7.838887329101563, 
         :alpha => 1.913371568830365e-7, 
         :alphas => 6.79157052489046e-7, 
@@ -47,7 +47,7 @@ function main(;plot_bool = false)
             working_prms,
             nonconverg_prms,
             slow_prms,
-            #extra_slow_prms,
+            extra_slow_prms,
             ]
         Testcell = iec.AYA_Sl()
         time = @elapsed try
