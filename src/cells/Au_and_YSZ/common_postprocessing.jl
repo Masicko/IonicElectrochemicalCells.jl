@@ -97,15 +97,29 @@ end
 
 ##### charge evaluation
 
-function chargeshow!(cell::Union{AYALG1iBoltzmann, AYA_Sl}; bend = 1.0, bstep=0.05, tend=1.0e-2)
-    aux_df = DataFrame(bias = [], charge = [])
+function chargeshow!(cell::Union{AYALG1iBoltzmann, AYA_Sl}; bend = 1.0, bstep=0.05, tend=1.0e-2, testing=false)
+    if testing
+        aux_df = DataFrame(bias = [], charge = [], V_ISR_error = [])
+    else
+        aux_df = DataFrame(bias = [], charge = [])
+    end
     function compute_charge(bias, cell)
-        push!(aux_df, (bias, get_stored_charge(cell)))
+        if testing
+            if !test_partial_charges(cell) 
+                println("bias: ",bias,"  -> TEST_PARTIAL_CHARGES  ... FAILED!")
+            end
+            push!(aux_df, (bias, get_stored_charge(cell), get_V_ISR_error(cell)))
+        else
+            push!(aux_df, (bias, get_stored_charge(cell)))
+        end
         return
     end
     gdf = biasshow!(cell, bend=bend, bstep=bstep, tend=tend, callback=compute_charge)
     sort!(aux_df, [:bias])
     gdf[:, :charge] = aux_df[:, :charge]
+    if testing
+        gdf[:, :V_ISR_error] = aux_df[:, :V_ISR_error]
+    end
     return gdf
 end
 
@@ -125,8 +139,8 @@ function eval_capacitance!(bdf)
     return bdf
 end
 
-function capacitance_measurement!(cell::Union{AYALG1iBoltzmann, AYA_Sl};bend = 1.0, bstep=0.01, tend=1.0e-2)
-    bdf = chargeshow!(cell, bend=bend+bstep, bstep=bstep, tend=tend)
+function capacitance_measurement!(cell::Union{AYALG1iBoltzmann, AYA_Sl};bend = 1.0, bstep=0.01, tend=1.0e-2, testing=false)
+    bdf = chargeshow!(cell, bend=bend+bstep, bstep=bstep, tend=tend, testing=testing)
     eval_capacitance!(bdf)
     delete!(bdf, [1, size(bdf)[1]])
     return bdf

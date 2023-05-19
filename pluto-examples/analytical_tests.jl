@@ -338,7 +338,7 @@ begin
 	V_ISR_anal = iec.HALF_get_analytic_V_ISR(data, V_tot)
 	println("\n>>> relative V_ISR error: ", (V_ISR_anal  - V_ISR)/V_ISR)
 	
-	iec.HALF_test_analytical_AYA_Sl(data, V_tot, V_ISR_anal, verbose=true)	
+	iec.get_AYA_Sl_analytical_poisson_eq(data, V_tot, V_ISR_anal, verbose=true)	
 	nothing
 end
 
@@ -346,7 +346,7 @@ end
 begin
 	nVs_my = 0.10066756787496388*(iec.nVmaxs(data.alphas, data.SL ))
 	nes_my = 0.805213129442643*(iec.nLAus(data.SL))
-	nFs_Au, nFs_YSZ, nFs_tot = iec.HALF_test_analytical_AYA_Sl(data, V_tot, V_ISR_anal, return_nFs=true, verbose=false)
+	nFs_Au, nFs_YSZ, nFs_tot = iec.get_AYA_Sl_analytical_poisson_eq(data, V_tot, V_ISR_anal, return_nFs=true, verbose=false)
 	nFs_anal(nes, nVs) = nFs_YSZ(nVs, data.SL) + nFs_Au(nes, data.SL)
 	nFs_sim(nes_eq, nVs_eq), nFs_anal(nes_eq, nVs_eq), nFs_tot(nes_eq, nVs_eq, data.SL)
 	nFs_sim(nes_my, nVs_my), nFs_anal(nes_my, nVs_my), nFs_tot(nes_my, nVs_my, data.SL)
